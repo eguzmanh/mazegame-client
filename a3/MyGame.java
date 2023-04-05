@@ -34,7 +34,9 @@ public class MyGame extends VariableFrameRateGame {
 
 	private GameObject dol, x, y, z, groundPlane, foodTorus;
 	private ObjShape dolS, linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
-	private TextureImage doltx, fstx;
+	private TextureImage doltx, fstx, terrTx;
+	private int spaceBox;
+	private TerrainPlane terrain;
 
 	private Light light1;
 
@@ -72,7 +74,7 @@ public class MyGame extends VariableFrameRateGame {
 	******************************************************/
 	@Override
 	public void loadShapes() {
-		dolS = new ImportedModel("dolphinHighPoly.obj");
+		dolS = new ImportedModel("BasicGuy.obj");
 
 		
 		linxS = new Line(new Vector3f(-gameworldEdgeBound,0f,0f), new Vector3f(gameworldEdgeBound,0f,0f)); 
@@ -94,8 +96,16 @@ public class MyGame extends VariableFrameRateGame {
 	public void loadTextures() {
 		doltx = new TextureImage("Dolphin_HighPolyUV.png");
 		fstx = new TextureImage("Drawer_Door.jpg");
+		terrTx = new TextureImage("Height map test.jpg");
 		customTextures.add(new TextureImage("Wood_Desk.png"));
 		customTextures.add(new TextureImage("Floral_Sheet.png"));
+	}
+
+	@Override
+	public void loadSkyBoxes(){
+		spaceBox = (engine.getSceneGraph()).loadCubeMap("lightblue");
+		(engine.getSceneGraph()).setActiveSkyBoxTexture(spaceBox);
+		(engine.getSceneGraph()).setSkyBoxEnabled(true);
 	}
 
 	@Override
@@ -199,9 +209,9 @@ public class MyGame extends VariableFrameRateGame {
 		Matrix4f initialTranslation, initialScale, initialRotation;
 	
 		// build dolphin in the center of the window
-		dol = new GameObject(GameObject.root(), dolS, doltx);
+		dol = new GameObject(GameObject.root(), dolS);
 		initialTranslation = (new Matrix4f()).translation(-1f,minGameObjectYLoc,1f); 
-		initialScale = (new Matrix4f()).scaling(3.0f);
+		initialScale = (new Matrix4f()).scaling(0.5f);
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(135.0f)); 
 		
 		dol.setLocalTranslation(initialTranslation);
@@ -220,13 +230,17 @@ public class MyGame extends VariableFrameRateGame {
 	}
 
 	private void buildGroundPlane() {
-		groundPlane = new GameObject(GameObject.root(), groundPlaneS);
-	
+		terrain = new TerrainPlane();
+		groundPlane = new GameObject(GameObject.root(), terrain);
+
+		groundPlane.setIsTerrain(true);
+		groundPlane.setHeightMap(terrTx);
+
 		// Not ouputting the correct color for some reason!!!
 		(groundPlane.getRenderStates()).setColor(new Vector3f(0f, 0.5608f, 1f)); 
-
+	
 		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound);
-		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, 0f, 0f);
+		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -5f, 0f);
 
 		groundPlane.setLocalScale(initialScale);
 		groundPlane.setLocalTranslation(initialTranslation);
