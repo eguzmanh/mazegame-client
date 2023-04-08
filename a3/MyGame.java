@@ -60,6 +60,8 @@ public class MyGame extends VariableFrameRateGame {
 	private long fileLastModifiedTime = 0;
 	ScriptEngine jsEngine;
 
+	private ScriptFactory scriptFactory;
+
 
 	private float foodTorusAzimuth, // start BEHIND and ABOVE the target 
 				foodTorusElevation, // elevation is in degrees 
@@ -87,33 +89,13 @@ public class MyGame extends VariableFrameRateGame {
 
 
 	public void initScriptEngine() {
-		// initialize the scripting engine
-		ScriptEngineManager factory = new ScriptEngineManager();
-		jsEngine = factory.getEngineByName("js");
-		scriptFile1 = new File("assets/scripts/InitData.js");
-		this.runScript(scriptFile1);
-		scriptFile2 = new File("assets/scripts/RuntimeDataUpdate.js");
-		this.runScript(scriptFile2);
-		// add the light specified in the script to the game world
-		// scriptFile2 = new File("assets/scripts/CreateLight.js");
-		// this.runScript(scriptFile2);
-		// (engine.getSceneGraph()).addLight((Light)jsEngine.get("light"));
-		// // set up the script that associates the light color with the space bar
-		// scriptFile3 = new File("assets/scripts/UpdateLightColor.js");
-		// this.runScript(scriptFile3);
+		scriptFactory = new ScriptFactory();
+		scriptFactory.initJSEngine();
+		scriptFactory.addJSScript("InitData", "assets/scripts/InitData.js");
+		scriptFactory.addJSScript("RuntimeDataUpdate", "assets/scripts/RuntimeDataUpdate.js", true);
+		scriptFactory.runJSScripts();
 	}
-
-	private void runScript(File scriptFile) { 
-		try { 
-			FileReader fileReader = new FileReader(scriptFile);
-			jsEngine.eval(fileReader);
-			fileReader.close();
-		}
-		catch (FileNotFoundException e1) { System.out.println(scriptFile + " not found " + e1); }
-		catch (IOException e2) { System.out.println("IO problem with " + scriptFile + e2); }
-		catch (ScriptException e3) { System.out.println("ScriptException in " + scriptFile + e3); }
-		catch (NullPointerException e4) { System.out.println ("Null ptr exception reading " + scriptFile + e4); } 
-	}
+	
 	/******************************************************
 	 * 	  * VariableFrameRateGame function overrides
 	******************************************************/
@@ -199,13 +181,10 @@ public class MyGame extends VariableFrameRateGame {
 		upateElapsedTimeInfo(); // elapsed time for only the current render and previous render
 		
 		checkGameOver();
-		
-		long modTime = scriptFile2.lastModified();
-		if (modTime > fileLastModifiedTime) { 
-			fileLastModifiedTime = modTime;
-			this.runScript(scriptFile2);
-			syncScriptData();
-		}
+
+		scriptFactory.update("js");
+		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
+
 		if (suspendGame()) return;
 		
 		// Orbit controller for the dolphin
@@ -247,13 +226,13 @@ public class MyGame extends VariableFrameRateGame {
 
 	private void syncScriptData() {
 		// moving to script engine 
-		numPrizes = (int)(jsEngine.get("numPrizes"));
-		prizeCounter = (int)(jsEngine.get("prizeCounter"));
-		prizeCounterWin = (int)(jsEngine.get("prizeCounterWin"));
-		numFoodStations = (int)(jsEngine.get("numFoodStations"));
-		foodStorageBuf = ((Double)(jsEngine.get("foodStorageBuf"))).floatValue();
-		foodLevel = ((Double)(jsEngine.get("foodLevel"))).floatValue();
-		foodLevelHungerThreshold = ((Double)(jsEngine.get("foodLevelHungerThreshold"))).floatValue();
+		numPrizes = scriptFactory.getIntFromEngine("js", "numPrizes");
+		prizeCounter = scriptFactory.getIntFromEngine("js", "prizeCounter");
+		prizeCounterWin =scriptFactory.getIntFromEngine("js", "prizeCounterWin");
+		numFoodStations = scriptFactory.getIntFromEngine("js", "numFoodStations");
+		foodStorageBuf = scriptFactory.getDoubleFVFromEngine("js", "foodStorageBuf");
+		foodLevel = scriptFactory.getDoubleFVFromEngine("js", "foodLevel");
+		foodLevelHungerThreshold =scriptFactory.getDoubleFVFromEngine("js", "foodLevelHungerThreshold");
 	}
 	/**
 	 * Helper functions used to build the intial 3D World Objects
