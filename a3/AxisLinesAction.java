@@ -7,10 +7,10 @@ import tage.*;
 import org.joml.*;
 
 public class AxisLinesAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
     private boolean linesEnabled;
 
-    public AxisLinesAction(MyGame g) {
+    public AxisLinesAction(MazeGame g) {
         game = g;
         linesEnabled = true;
     }

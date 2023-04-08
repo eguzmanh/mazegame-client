@@ -9,9 +9,9 @@ import tage.*;
 // Class to deal with yawing for the camera and the dolphin
 // This class will allow different devices to use it
 public class TurnAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
 
-    public TurnAction(MyGame g){
+    public TurnAction(MazeGame g){
         game = g;
     }
     

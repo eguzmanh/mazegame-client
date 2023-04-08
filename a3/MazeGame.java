@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-public class MyGame extends VariableFrameRateGame {
+public class MazeGame extends VariableFrameRateGame {
 	private static Engine engine;
 	private Camera engineCamera, overheadEngineCamera;
 	private OverheadCameraController ohCameraController;
@@ -70,7 +70,7 @@ public class MyGame extends VariableFrameRateGame {
 	private boolean foodStorageEmpty;
 	
 
-	public MyGame() { 
+	public MazeGame() { 
 		super();
 		initScriptEngine();
 		initGameVariables();
@@ -80,7 +80,7 @@ public class MyGame extends VariableFrameRateGame {
 	}
 
 	public static void main(String[] args) {	
-		MyGame game = new MyGame();
+		MazeGame game = new MazeGame();
 		engine = new Engine(game);
 		game.initializeSystem();
 		game.game_loop();

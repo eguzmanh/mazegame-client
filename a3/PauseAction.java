@@ -9,9 +9,9 @@ import org.joml.*;
 
 // Class to deal with toggling the pause mode of the game
 public class PauseAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
 
-    public PauseAction(MyGame g) {
+    public PauseAction(MazeGame g) {
         game = g;
     }
 

@@ -1,4 +1,4 @@
-package myGame;
+package MazeGame;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -13,11 +13,11 @@ import tage.networking.client.GameConnectionClient;
 
 public class ProtocolClient extends GameConnectionClient
 {
-	private MyGame game;
+	private MazeGame game;
 	private GhostManager ghostManager;
 	private UUID id;
 	
-	public ProtocolClient(InetAddress remoteAddr, int remotePort, ProtocolType protocolType, MyGame game) throws IOException 
+	public ProtocolClient(InetAddress remoteAddr, int remotePort, ProtocolType protocolType, MazeGame game) throws IOException 
 	{	super(remoteAddr, remotePort, protocolType);
 		this.game = game;
 		this.id = UUID.randomUUID();
@@ -129,7 +129,7 @@ public class ProtocolClient extends GameConnectionClient
 		{	e.printStackTrace();
 	}	}
 	
-	// Informs the server of the client’s Avatar’s position. The server 
+	// Informs the server of the clientï¿½s Avatarï¿½s position. The server 
 	// takes this message and forwards it to all other clients registered 
 	// with the server.
 	// Message Format: (create,localId,x,y,z) where x, y, and z represent the position

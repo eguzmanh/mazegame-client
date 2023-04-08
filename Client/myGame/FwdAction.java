@@ -1,4 +1,4 @@
-package myGame;
+package MazeGame;
 
 import tage.*;
 import tage.input.action.AbstractInputAction;
@@ -7,13 +7,13 @@ import org.joml.*;
 
 public class FwdAction extends AbstractInputAction
 {
-	private MyGame game;
+	private MazeGame game;
 	private GameObject av;
 	private Vector3f oldPosition, newPosition;
 	private Vector4f fwdDirection;
 	private ProtocolClient protClient;
 
-	public FwdAction(MyGame g, ProtocolClient p)
+	public FwdAction(MazeGame g, ProtocolClient p)
 	{	game = g;
 		protClient = p;
 	}

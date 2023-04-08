@@ -1,4 +1,4 @@
-package myGame;
+package MazeGame;
 
 import tage.*;
 import tage.input.action.AbstractInputAction;
@@ -7,12 +7,12 @@ import org.joml.*;
 
 public class TurnAction extends AbstractInputAction
 {
-	private MyGame game;
+	private MazeGame game;
 	private GameObject av;
 	private Vector4f oldUp;
 	private Matrix4f rotAroundAvatarUp, oldRotation, newRotation;
 
-	public TurnAction(MyGame g)
+	public TurnAction(MazeGame g)
 	{	game = g;
 	}
 

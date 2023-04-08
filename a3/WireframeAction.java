@@ -7,10 +7,10 @@ import tage.*;
 import org.joml.*;
 
 public class WireframeAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
     // private GameObject dolphin;
 
-    public WireframeAction(MyGame g) {
+    public WireframeAction(MazeGame g) {
         game = g;
     }
 

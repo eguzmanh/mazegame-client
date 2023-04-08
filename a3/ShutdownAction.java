@@ -9,9 +9,9 @@ import org.joml.*;
 
 // Class to deal with toggling riding the dolphin
 public class ShutdownAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
 
-    public ShutdownAction(MyGame g) {
+    public ShutdownAction(MazeGame g) {
         game = g;
     }
 

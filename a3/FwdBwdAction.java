@@ -13,9 +13,9 @@ import org.joml.*;
 // Class to deal with moving forward and backward for the camera and the dolphin
 // This class will allow different devices to use it
 public class FwdBwdAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
 
-    public FwdBwdAction(MyGame g){
+    public FwdBwdAction(MazeGame g){
         game = g;
     }
 

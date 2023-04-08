@@ -1,4 +1,4 @@
-package myGame;
+package MazeGame;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -12,11 +12,11 @@ import tage.*;
 
 public class GhostManager
 {
-	private MyGame game;
+	private MazeGame game;
 	private Vector<GhostAvatar> ghostAvatars = new Vector<GhostAvatar>();
 
 	public GhostManager(VariableFrameRateGame vfrg)
-	{	game = (MyGame)vfrg;
+	{	game = (MazeGame)vfrg;
 	}
 	
 	public void createGhostAvatar(UUID id, Vector3f position) throws IOException

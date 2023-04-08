@@ -9,9 +9,9 @@ import org.joml.*;
 
 // Class to deal with toggling riding the dolphin
 public class ScreenModeToggleAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
 
-    public ScreenModeToggleAction(MyGame g) {
+    public ScreenModeToggleAction(MazeGame g) {
         game = g;
     }
 

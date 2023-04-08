@@ -11,10 +11,10 @@ import org.joml.*;
 // Class to deal with pitching for the camera and the dolphin
 // This class will allow different devices to use it
 public class PitchAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
     // private GameObject dolphin;
 
-    public PitchAction(MyGame g) {
+    public PitchAction(MazeGame g) {
         game = g;
     }
 

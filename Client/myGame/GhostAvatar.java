@@ -1,4 +1,4 @@
-package myGame;
+package MazeGame;
 
 import java.util.UUID;
 

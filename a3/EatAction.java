@@ -9,9 +9,9 @@ import org.joml.*;
 
 // Class to deal with toggling riding the dolphin
 public class EatAction extends AbstractInputAction {
-    private MyGame game;
+    private MazeGame game;
 
-    public EatAction(MyGame g) {
+    public EatAction(MazeGame g) {
         game = g;
     }
 

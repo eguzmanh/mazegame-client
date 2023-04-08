@@ -1,4 +1,4 @@
-package myGame;
+package MazeGame;
 
 import tage.*;
 import tage.shapes.*;
@@ -23,7 +23,7 @@ import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
 import tage.networking.IGameConnection.ProtocolType;
 
-public class MyGame extends VariableFrameRateGame
+public class MazeGame extends VariableFrameRateGame
 {
 	private static Engine engine;
 	private InputManager im;
@@ -45,7 +45,7 @@ public class MyGame extends VariableFrameRateGame
 	private ProtocolClient protClient;
 	private boolean isClientConnected = false;
 
-	public MyGame(String serverAddress, int serverPort, String protocol)
+	public MazeGame(String serverAddress, int serverPort, String protocol)
 	{	super();
 		gm = new GhostManager(this);
 		this.serverAddress = serverAddress;
@@ -57,7 +57,7 @@ public class MyGame extends VariableFrameRateGame
 	}
 
 	public static void main(String[] args)
-	{	MyGame game = new MyGame(args[0], Integer.parseInt(args[1]), args[2]);
+	{	MazeGame game = new MazeGame(args[0], Integer.parseInt(args[1]), args[2]);
 		engine = new Engine(game);
 		game.initializeSystem();
 		game.game_loop();
