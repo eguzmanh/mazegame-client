@@ -57,7 +57,9 @@ public class FwdBwdAction extends AbstractInputAction {
         }
 
         game.fwdBwdAction(newSpeed * 2);
-        protClient.sendMoveMessage(game.getPlayerPosition());
+        System.out.println(game.getProtClient());
+        System.out.println(game.getPlayerPosition());
+        // protClient.sendMoveMessage(game.getPlayerPosition());
     }
 }
 

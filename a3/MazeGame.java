@@ -771,8 +771,15 @@ public class MazeGame extends VariableFrameRateGame {
 	
 	protected void processNetworking(float elapsTime)
 	{	// Process packets received by the client from the server
-		if (protClient != null)
+		if (protClient != null) {
+			// System.out.println(protClient);
+			// System.out.println("\n\n");
 			protClient.processPackets();
+		}
+	}
+
+	public ProtocolClient getProtClient() {
+		return protClient;
 	}
 
 	public Vector3f getPlayerPosition() { return dol.getWorldLocation(); }
