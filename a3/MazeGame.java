@@ -755,25 +755,6 @@ public class MazeGame extends VariableFrameRateGame {
 
 	public Engine getEngine() { return engine; }
 	
-	// private void setupNetworking() {
-	// 	isClientConnected = false;	
-	// 	try 
-	// 	{	protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
-	// 	} 	catch (UnknownHostException e) 
-	// 	{	e.printStackTrace();
-	// 	}	catch (IOException e) 
-	// 	{	e.printStackTrace();
-	// 	}
-	// 	if (protClient == null)
-	// 	{	System.out.println("missing protocol host");
-	// 	}
-	// 	else
-	// 	{	// Send the initial join message with a unique identifier for this client
-	// 		System.out.println("sending join message to protocol host");
-	// 		protClient.sendJoinMessage();
-	// 	}
-	// }
-	
 	protected void processNetworking(float elapsTime) { networkClient.runProcessNetworking(elapsTime); }
 
 	public ProtocolClient getProtClient() { return networkClient.getProtClient(); }

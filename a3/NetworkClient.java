@@ -20,7 +20,7 @@ public class NetworkClient {
 	private int serverPort;
 	private ProtocolType serverProtocol;
 	private ProtocolClient protClient;
-	private boolean isClientConnected = false;
+	private boolean isClientConnected;
 
     private ObjShape ghostS;
     private TextureImage ghostTx;
@@ -30,6 +30,7 @@ public class NetworkClient {
         gm = new GhostManager(game);
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
+        this.isClientConnected = false;
 
 		if (protocol.toUpperCase().compareTo("TCP") == 0)
 			this.serverProtocol = ProtocolType.TCP;
@@ -37,25 +38,15 @@ public class NetworkClient {
 			this.serverProtocol = ProtocolType.UDP;
     }
 
-    public GhostManager getGhostManager() {
-		return gm;
-	}
+    public GhostManager getGhostManager() { return gm; }
 
-    public ObjShape getGhostShape() {
-		return ghostS;
-	}
+    public ObjShape getGhostShape() { return ghostS; }
 	
-	public TextureImage getGhostTexture() {
-		return ghostTx;
-	}
+	public TextureImage getGhostTexture() { return ghostTx; }
 
-    public void setGhostShape(ObjShape ghostShape) {
-		ghostS = ghostShape;
-	}
+    public void setGhostShape(ObjShape ghostShape) { ghostS = ghostShape; }
 	
-	public void setGhostTexture(TextureImage ghostTexture) {
-		ghostTx = ghostTexture;
-	}
+	public void setGhostTexture(TextureImage ghostTexture) { ghostTx = ghostTexture; }
 
     public void setupNetworking() {
 		isClientConnected = false;	
@@ -79,30 +70,17 @@ public class NetworkClient {
 	protected void processNetworking(float elapsTime)
 	{	// Process packets received by the client from the server
 		if (protClient != null) {
-			// System.out.println(protClient);
-			// System.out.println("\n\n");
 			protClient.processPackets();
 		}
 	}
 
-    public void runProcessNetworking(float elapsTime) {
-        processNetworking(elapsTime);
-    }
+    public void runProcessNetworking(float elapsTime) { processNetworking(elapsTime); }
 
-	public ProtocolClient getProtClient() {
-		return protClient;
-	}
+	public ProtocolClient getProtClient() { return protClient; }
 
 	public void setIsConnected(boolean value) { this.isClientConnected = value; }
 	
 	private class SendCloseConnectionPacketAction extends AbstractInputAction {	
-        // @Override
-		// public void performAction(float time, Event evt) {	
-        //     if(protClient != null && isClientConnected == true) {	
-        //         protClient.sendByeMessage();
-		// 	}
-		// }
-
         @Override
         public void performAction(float time, Event evt) {
             if(protClient != null && isClientConnected == true) {	
