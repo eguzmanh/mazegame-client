@@ -450,7 +450,7 @@ public class MazeGame extends VariableFrameRateGame {
 		PauseAction pauseActionCmd = new PauseAction(this);
 		WireframeAction wireframeActionCmd = new WireframeAction(this);
 		// SpacebarAction spacebarAction = new SpacebarAction(this);
-		FwdBwdAction fwdbwdActionCmd = new FwdBwdAction(this); 
+		FwdBwdAction fwdbwdActionCmd = new FwdBwdAction(this, protClient); 
 		TurnAction turnActionCmd = new TurnAction(this); 
 		// PitchAction pitchActionCmd = new PitchAction(this); 
 		EatAction eatActionCmd = new EatAction(this);

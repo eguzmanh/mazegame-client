@@ -14,9 +14,11 @@ import org.joml.*;
 // This class will allow different devices to use it
 public class FwdBwdAction extends AbstractInputAction {
     private MazeGame game;
+    private ProtocolClient protClient;
 
-    public FwdBwdAction(MazeGame g){
+    public FwdBwdAction(MazeGame g, ProtocolClient p){
         game = g;
+        protClient = p;
     }
 
     public void associateDeviceInputs() {
@@ -55,6 +57,7 @@ public class FwdBwdAction extends AbstractInputAction {
         }
 
         game.fwdBwdAction(newSpeed * 2);
+        protClient.sendMoveMessage(game.getPlayerPosition());
     }
 }
 

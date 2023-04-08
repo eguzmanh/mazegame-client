@@ -33,7 +33,7 @@ public class GhostManager
 	{	GhostAvatar ghostAvatar = findAvatar(id);
 		if(ghostAvatar != null)
 		{	
-			// game.getEngine().getSceneGraph().removeGameObject(ghostAvatar);
+			game.getEngine().getSceneGraph().removeGameObject(ghostAvatar);
 			ghostAvatars.remove(ghostAvatar);
 		}
 		else
