@@ -136,7 +136,7 @@ public class ScriptFactory {
 
         public boolean hasBeenModified() {
             currModTime = script.lastModified();
-            System.out.println("this should be runing\n\n\n\\n");
+            // System.out.println("this should be runing\n\n\n\\n");
             if (currModTime > fileLastModifiedTime) { 
                 fileLastModifiedTime = currModTime;
                 return true;

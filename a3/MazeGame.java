@@ -2,10 +2,14 @@ package a3;
 
 import tage.*;
 import tage.input.InputManager;
+import tage.input.action.AbstractInputAction;
+import tage.networking.IGameConnection.ProtocolType;
 import tage.nodeControllers.*;
 import tage.shapes.*;
 
 import java.lang.Math;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -22,6 +26,7 @@ import javax.script.Invocable;
 
 import org.joml.*;
 import net.java.games.input.Component.Identifier.Key;
+import net.java.games.input.Event;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,8 +61,8 @@ public class MazeGame extends VariableFrameRateGame {
 	private ArrayList<Prize> prizes;
 	private ArrayList<FoodStation> foodStations;
 
-	private File scriptFile1, scriptFile2, scriptFile3;
-	private long fileLastModifiedTime = 0;
+	// private File scriptFile1, scriptFile2, scriptFile3;
+	// private long fileLastModifiedTime = 0;
 	ScriptEngine jsEngine;
 
 	private ScriptFactory scriptFactory;
@@ -68,19 +73,34 @@ public class MazeGame extends VariableFrameRateGame {
 				foodTorusRadius; // distance from camera to avatar
 	private float foodStorageBuf;
 	private boolean foodStorageEmpty;
+
+	private GhostManager gm;
+	private String serverAddress;
+	private int serverPort;
+	private ProtocolType serverProtocol;
+	private ProtocolClient protClient;
+	private boolean isClientConnected = false;
 	
 
-	public MazeGame() { 
+	public MazeGame(String serverAddress, int serverPort, String protocol) { 
 		super();
 		initScriptEngine();
 		initGameVariables();
 		customTextures = new ArrayList<TextureImage>();  // allows prizes to get a random texture from the options available
 		prizes = new ArrayList<Prize>();  // allows dynamic number of prizes
 		foodStations = new ArrayList<FoodStation>(); // allows dynamic number of food stations
+
+		gm = new GhostManager(this);
+		this.serverAddress = serverAddress;
+		this.serverPort = serverPort;
+		if (protocol.toUpperCase().compareTo("TCP") == 0)
+			this.serverProtocol = ProtocolType.TCP;
+		else
+			this.serverProtocol = ProtocolType.UDP;
 	}
 
 	public static void main(String[] args) {	
-		MazeGame game = new MazeGame();
+		MazeGame game = new MazeGame(args[0], Integer.parseInt(args[1]), args[2]);
 		engine = new Engine(game);
 		game.initializeSystem();
 		game.game_loop();
@@ -173,6 +193,7 @@ public class MazeGame extends VariableFrameRateGame {
 		foodTorusAzimuth = 0.0f;
 		foodTorusElevation = 0.0f;
 		foodTorusRadius = 4.0f;
+		setupNetworking();
 	}
 
 	@Override
@@ -190,16 +211,16 @@ public class MazeGame extends VariableFrameRateGame {
 		// Orbit controller for the dolphin
 		orbit3DController.updateCameraPosition();
 		
-		validatePrizeCollisions();
-		validateFoodStationCollisions();
+		// validatePrizeCollisions();
+		// validateFoodStationCollisions();
 		
-		decreaseFoodLevel(); // ensures that player eata from food stations in order to win
+		// decreaseFoodLevel(); // ensures that player eata from food stations in order to win
 		
 		rotateTorusIfFoodAvailable();
 
 		// build and set HUD
 		buildHUDs();
-
+		processNetworking((float)elapsTime);
 	}
 	
 	/******************************************************
@@ -713,4 +734,57 @@ public class MazeGame extends VariableFrameRateGame {
 	// Check if the game is suspended
 	public boolean isSuspended() {return isPaused() || isGameOver(); }
 
+
+	// ************************ Network methods *********************************
+	public ObjShape getGhostShape() {
+		return dolS;
+	}
+	
+	public TextureImage getGhostTexture() {
+		return doltx;
+	}
+
+	public GhostManager getGhostManager() {
+		return gm;
+	}
+
+	public Engine getEngine() { return engine; }
+	
+	private void setupNetworking() {
+		isClientConnected = false;	
+		try 
+		{	protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
+		} 	catch (UnknownHostException e) 
+		{	e.printStackTrace();
+		}	catch (IOException e) 
+		{	e.printStackTrace();
+		}
+		if (protClient == null)
+		{	System.out.println("missing protocol host");
+		}
+		else
+		{	// Send the initial join message with a unique identifier for this client
+			System.out.println("sending join message to protocol host");
+			protClient.sendJoinMessage();
+		}
+	}
+	
+	protected void processNetworking(float elapsTime)
+	{	// Process packets received by the client from the server
+		if (protClient != null)
+			protClient.processPackets();
+	}
+
+	public Vector3f getPlayerPosition() { return dol.getWorldLocation(); }
+
+	public void setIsConnected(boolean value) { this.isClientConnected = value; }
+	
+	private class SendCloseConnectionPacketAction extends AbstractInputAction
+	{	@Override
+		public void performAction(float time, Event evt) 
+		{	if(protClient != null && isClientConnected == true)
+			{	protClient.sendByeMessage();
+			}
+		}
+	}
 }
