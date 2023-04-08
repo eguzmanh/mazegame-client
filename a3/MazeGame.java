@@ -80,6 +80,8 @@ public class MazeGame extends VariableFrameRateGame {
 	private ProtocolType serverProtocol;
 	private ProtocolClient protClient;
 	private boolean isClientConnected = false;
+
+	private NetworkClient networkClient;
 	
 
 	public MazeGame(String serverAddress, int serverPort, String protocol) { 
@@ -90,13 +92,14 @@ public class MazeGame extends VariableFrameRateGame {
 		prizes = new ArrayList<Prize>();  // allows dynamic number of prizes
 		foodStations = new ArrayList<FoodStation>(); // allows dynamic number of food stations
 
-		gm = new GhostManager(this);
-		this.serverAddress = serverAddress;
-		this.serverPort = serverPort;
-		if (protocol.toUpperCase().compareTo("TCP") == 0)
-			this.serverProtocol = ProtocolType.TCP;
-		else
-			this.serverProtocol = ProtocolType.UDP;
+		networkClient = new NetworkClient(this, serverAddress, serverPort, protocol);
+		// gm = new GhostManager(this);
+		// this.serverAddress = serverAddress;
+		// this.serverPort = serverPort;
+		// if (protocol.toUpperCase().compareTo("TCP") == 0)
+		// 	this.serverProtocol = ProtocolType.TCP;
+		// else
+		// 	this.serverProtocol = ProtocolType.UDP;
 	}
 
 	public static void main(String[] args) {	
@@ -193,7 +196,7 @@ public class MazeGame extends VariableFrameRateGame {
 		foodTorusAzimuth = 0.0f;
 		foodTorusElevation = 0.0f;
 		foodTorusRadius = 4.0f;
-		setupNetworking();
+		networkClient.setupNetworking();
 	}
 
 	@Override
@@ -211,10 +214,10 @@ public class MazeGame extends VariableFrameRateGame {
 		// Orbit controller for the dolphin
 		orbit3DController.updateCameraPosition();
 		
-		// validatePrizeCollisions();
-		// validateFoodStationCollisions();
+		validatePrizeCollisions();
+		validateFoodStationCollisions();
 		
-		// decreaseFoodLevel(); // ensures that player eata from food stations in order to win
+		decreaseFoodLevel(); // ensures that player eata from food stations in order to win
 		
 		rotateTorusIfFoodAvailable();
 
@@ -263,6 +266,8 @@ public class MazeGame extends VariableFrameRateGame {
 	
 		// build dolphin in the center of the window
 		dol = new GameObject(GameObject.root(), dolS);
+		networkClient.setGhostShape(dolS);
+		networkClient.setGhostTexture(doltx);
 		initialTranslation = (new Matrix4f()).translation(-1f,minGameObjectYLoc,1f); 
 		initialScale = (new Matrix4f()).scaling(0.5f);
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(135.0f)); 
@@ -450,7 +455,7 @@ public class MazeGame extends VariableFrameRateGame {
 		PauseAction pauseActionCmd = new PauseAction(this);
 		WireframeAction wireframeActionCmd = new WireframeAction(this);
 		// SpacebarAction spacebarAction = new SpacebarAction(this);
-		FwdBwdAction fwdbwdActionCmd = new FwdBwdAction(this, protClient); 
+		FwdBwdAction fwdbwdActionCmd = new FwdBwdAction(this); 
 		TurnAction turnActionCmd = new TurnAction(this); 
 		// PitchAction pitchActionCmd = new PitchAction(this); 
 		EatAction eatActionCmd = new EatAction(this);
@@ -737,61 +742,46 @@ public class MazeGame extends VariableFrameRateGame {
 
 	// ************************ Network methods *********************************
 	public ObjShape getGhostShape() {
-		return dolS;
+		return networkClient.getGhostShape();
 	}
 	
 	public TextureImage getGhostTexture() {
-		return doltx;
+		return networkClient.getGhostTexture();
 	}
 
 	public GhostManager getGhostManager() {
-		return gm;
+		return networkClient.getGhostManager();
 	}
 
 	public Engine getEngine() { return engine; }
 	
-	private void setupNetworking() {
-		isClientConnected = false;	
-		try 
-		{	protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
-		} 	catch (UnknownHostException e) 
-		{	e.printStackTrace();
-		}	catch (IOException e) 
-		{	e.printStackTrace();
-		}
-		if (protClient == null)
-		{	System.out.println("missing protocol host");
-		}
-		else
-		{	// Send the initial join message with a unique identifier for this client
-			System.out.println("sending join message to protocol host");
-			protClient.sendJoinMessage();
-		}
-	}
+	// private void setupNetworking() {
+	// 	isClientConnected = false;	
+	// 	try 
+	// 	{	protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
+	// 	} 	catch (UnknownHostException e) 
+	// 	{	e.printStackTrace();
+	// 	}	catch (IOException e) 
+	// 	{	e.printStackTrace();
+	// 	}
+	// 	if (protClient == null)
+	// 	{	System.out.println("missing protocol host");
+	// 	}
+	// 	else
+	// 	{	// Send the initial join message with a unique identifier for this client
+	// 		System.out.println("sending join message to protocol host");
+	// 		protClient.sendJoinMessage();
+	// 	}
+	// }
 	
-	protected void processNetworking(float elapsTime)
-	{	// Process packets received by the client from the server
-		if (protClient != null) {
-			// System.out.println(protClient);
-			// System.out.println("\n\n");
-			protClient.processPackets();
-		}
-	}
+	protected void processNetworking(float elapsTime) { networkClient.runProcessNetworking(elapsTime); }
 
-	public ProtocolClient getProtClient() {
-		return protClient;
-	}
+	public ProtocolClient getProtClient() { return networkClient.getProtClient(); }
+
+	public GameObject getPlayer() { return dol; }
 
 	public Vector3f getPlayerPosition() { return dol.getWorldLocation(); }
 
-	public void setIsConnected(boolean value) { this.isClientConnected = value; }
+	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
 	
-	private class SendCloseConnectionPacketAction extends AbstractInputAction
-	{	@Override
-		public void performAction(float time, Event evt) 
-		{	if(protClient != null && isClientConnected == true)
-			{	protClient.sendByeMessage();
-			}
-		}
-	}
 }

@@ -14,11 +14,11 @@ import org.joml.*;
 // This class will allow different devices to use it
 public class FwdBwdAction extends AbstractInputAction {
     private MazeGame game;
-    private ProtocolClient protClient;
+    // private ProtocolClient protClient;
 
-    public FwdBwdAction(MazeGame g, ProtocolClient p){
+    public FwdBwdAction(MazeGame g){
         game = g;
-        protClient = p;
+        // protClient = p;
     }
 
     public void associateDeviceInputs() {
