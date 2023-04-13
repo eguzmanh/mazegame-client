@@ -1,1 +1,1 @@
-java -Dsun.java2d.d3d=false -Dsun.java2d.uiScale=1 a3.MazeGame 130.86.181.143 6010 UDP
+java -Dsun.java2d.d3d=false -Dsun.java2d.uiScale=1 a3.MazeGame 192.168.50.80 6010 UDP

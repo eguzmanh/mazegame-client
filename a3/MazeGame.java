@@ -44,12 +44,12 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private int prizeCounter, prizeCounterWin, numPrizes, numFoodStations;
 	private float timer, foodLevel, foodLevelHungerThreshold, gameworldEdgeBound, minGameObjectYLoc;
-	private boolean isMounted, paused, isInDolphinBounds, gameOver;
+	private boolean isMounted, paused, isInPlayerBounds, gameOver;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject dol, x, y, z, groundPlane, foodTorus;
-	private ObjShape dolS, linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
-	private TextureImage doltx, fstx, terrTx, forestFloor;
+	private GameObject plyr, x, y, z, groundPlane, foodTorus;
+	private ObjShape plyrS, linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
+	private TextureImage plyrtx, fstx, terrTx, forestFloor;
 	private int spaceBox;
 	private TerrainPlane terrain;
 
@@ -124,7 +124,7 @@ public class MazeGame extends VariableFrameRateGame {
 	******************************************************/
 	@Override
 	public void loadShapes() {
-		dolS = new ImportedModel("BasicGuy.obj");
+		plyrS = new ImportedModel("BasicGuy.obj");
 
 		linxS = new Line(new Vector3f(-gameworldEdgeBound,0f,0f), new Vector3f(gameworldEdgeBound,0f,0f)); 
 		linyS = new Line(new Vector3f(0f,-gameworldEdgeBound,0f), new Vector3f(0f,gameworldEdgeBound,0f)); 
@@ -161,7 +161,7 @@ public class MazeGame extends VariableFrameRateGame {
 	public void buildObjects() {	
 		buildWorldAxisLines();
 		buildGroundPlane();
-		buildDolphin();
+		buildPlayer();
 		buildPrizes();
 		buildFoodStations();	
 		buildFoodTorus();
@@ -200,22 +200,22 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	@Override
-	public void update() {	// rotate dolphin if not paused
+	public void update() {	// rotate Player if not paused
 		// Update elapsed time regardless of the game status
 		upateElapsedTimeInfo(); // elapsed time for only the current render and previous render
 		
 		checkGameOver();
 
-		Vector3f loc = dol.getWorldLocation();
+		Vector3f loc = plyr.getWorldLocation();
 		float height = groundPlane.getHeight(loc.x(), loc.z());
-		dol.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
+		plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
 
 		scriptFactory.update("js");
 		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
 
 		if (suspendGame()) return;
 		
-		// Orbit controller for the dolphin
+		// Orbit controller for the Player
 		orbit3DController.updateCameraPosition();
 		
 		validatePrizeCollisions();
@@ -239,7 +239,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private void initGameVariables() {
 		// isMounted = false;
 		paused = false;
-		// isInDolphinBounds = true;
+		// isInPlayerBounds = true;
 		gameOver = false;
 		elapsTime = 0.0f;
 		timer = 0.0f;
@@ -265,20 +265,20 @@ public class MazeGame extends VariableFrameRateGame {
 	/**
 	 * Helper functions used to build the intial 3D World Objects
 	 */
-	private void buildDolphin() {
+	private void buildPlayer() {
 		Matrix4f initialTranslation, initialScale, initialRotation;
 	
-		// build dolphin in the center of the window
-		dol = new GameObject(GameObject.root(), dolS);
-		networkClient.setGhostShape(dolS);
-		networkClient.setGhostTexture(doltx);
+		// build Player in the center of the window
+		plyr = new GameObject(GameObject.root(), plyrS);
+		networkClient.setGhostShape(plyrS);
+		networkClient.setGhostTexture(plyrtx);
 		initialTranslation = (new Matrix4f()).translation(-1f,minGameObjectYLoc,1f); 
 		initialScale = (new Matrix4f()).scaling(0.5f);
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(135.0f)); 
 		
-		dol.setLocalTranslation(initialTranslation);
-		dol.setLocalRotation(initialRotation); 
-		dol.setLocalScale(initialScale);
+		plyr.setLocalTranslation(initialTranslation);
+		plyr.setLocalRotation(initialRotation); 
+		plyr.setLocalScale(initialScale);
 	}
 	
 	private void buildWorldAxisLines() {
@@ -300,6 +300,8 @@ public class MazeGame extends VariableFrameRateGame {
 		groundPlane.setLocalTranslation(initialTranslation);
 
 		groundPlane.setHeightMap(terrTx);
+		
+		groundPlane.getRenderStates().setTiling(1);
 	}
 
 	/**
@@ -335,7 +337,7 @@ public class MazeGame extends VariableFrameRateGame {
 		initialScale = (new Matrix4f()).scaling(0.07f);
 		// foodTorus.setLocalTranslation(initialTranslation); 
 		foodTorus.setLocalScale(initialScale);
-		foodTorus.setParent(dol); 
+		foodTorus.setParent(plyr); 
 		foodTorus.propagateTranslation(false); 
 		foodTorus.propagateRotation(false); 
 		foodTorus.applyParentRotationToPosition(false); 
@@ -415,7 +417,7 @@ public class MazeGame extends VariableFrameRateGame {
 		overheadEngineCamera.setV(new Vector3f(0,0,-1)); 
 		overheadEngineCamera.setN(new Vector3f(0,-1,0)); 
 
-		ohCameraController = new OverheadCameraController(overheadEngineCamera, dol, engine);
+		ohCameraController = new OverheadCameraController(overheadEngineCamera, plyr, engine);
 	}
 	private void initEngineHUDManager(){
 		hudManager = engine.getHUDmanager();
@@ -438,7 +440,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private void init3DOrbitController() {
 		// ------------- setup 3d Orbit Controller for the main camera -------------
 		// adjustCameraView(-1.85f, 0.6f, -0.75f);
-		orbit3DController = new CameraOrbit3D(engineCamera, dol, engine);
+		orbit3DController = new CameraOrbit3D(engineCamera, plyr, engine);
 		System.out.println("orbit3DController: " + orbit3DController);
 	}
 
@@ -507,10 +509,10 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	private void _wireframeAction() {
-		if (dol.getRenderStates().isWireframe()) {
-			dol.getRenderStates().setWireframe(false);
+		if (plyr.getRenderStates().isWireframe()) {
+			plyr.getRenderStates().setWireframe(false);
 		} else {
-			dol.getRenderStates().setWireframe(true);
+			plyr.getRenderStates().setWireframe(true);
 		}
 		
 	}
@@ -522,25 +524,25 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private void _turnAction(float newSpeed){
 		Matrix4f worldYM = y.getWorldRotation();
-		dol.yaw(newSpeed, worldYM);
+		plyr.yaw(newSpeed, worldYM);
 	}
 
 	private void _pitchAction(float newSpeed) {
-		dol.pitch(newSpeed);
+		plyr.pitch(newSpeed);
 	}
 
 	private void _fwdBwdAction(float newSpeed){
 		Vector3f oldPosition, fwdDirection, newLocation;
 
-		oldPosition = dol.getWorldLocation(); 
-		fwdDirection = dol.getWorldForwardVector(); // N vector 
+		oldPosition = plyr.getWorldLocation(); 
+		fwdDirection = plyr.getWorldForwardVector(); // N vector 
 		newLocation = oldPosition.add(fwdDirection.mul(newSpeed)); 
 
-		// prevents dolphin from moving below the plane
+		// prevents Player from moving below the plane
 		if(newLocation.y() <= minGameObjectYLoc) { 
 			newLocation.set(newLocation.x(), minGameObjectYLoc, newLocation.z());
 		}
-		dol.setLocalLocation(newLocation); 
+		plyr.setLocalLocation(newLocation); 
 	}
 
 	private void _axisLinesAction(boolean axisLinesEnabled) {
@@ -585,7 +587,7 @@ public class MazeGame extends VariableFrameRateGame {
 		float y = foodTorusRadius * (float)(Math.sin(phi)); 
 		float z = foodTorusRadius * (float)(Math.cos(phi) * Math.cos(theta)); 
 
-		foodTorus.setLocalLocation(new Vector3f(x,y,z).add(dol.getWorldLocation())); 
+		foodTorus.setLocalLocation(new Vector3f(x,y,z).add(plyr.getWorldLocation())); 
 		
 	}
 	
@@ -597,9 +599,9 @@ public class MazeGame extends VariableFrameRateGame {
 	 */
 	private void validatePrizeCollisions() {
 		if (preventPrizeCollection()) return;
-		Vector3f dolLoc = dol.getLocalLocation();
+		Vector3f plyrLoc = plyr.getLocalLocation();
 		for (Prize go : prizes) {
-			if (go.isEnabled() && dolLoc.distance(go.getLocalLocation()) < 4.5f) {
+			if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
 				System.out.println("Collision detected!!");
 				go.disable();
 				rc.addTarget(go);
@@ -610,13 +612,13 @@ public class MazeGame extends VariableFrameRateGame {
 
 	/**
 	 * Iterates through the Food Station Array List and will go through collision detection
-	 * A player must be OFF the dolphin to collect the food source
+	 * A player must be OFF the Player to collect the food source
 	 */
 	private void validateFoodStationCollisions() {
 		// if (isMounted) return;
-		Vector3f dolLoc = dol.getLocalLocation();
+		Vector3f plyrLoc = plyr.getLocalLocation();
 		for (FoodStation go : foodStations) {
-			if (go.isEnabled() && dolLoc.distance(go.getLocalLocation()) < 4.5f) {
+			if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
 				System.out.println("Collision detected!!");
 				bc.addTarget(go);
 				rc.addTarget(go);
@@ -667,10 +669,10 @@ public class MazeGame extends VariableFrameRateGame {
 		String dispStr1 = "Prizes Collected = " + prizeCounterStr;
 		String dispStr2 = "Food Level = " + foodLevelStr;
 
-		String ds3X = String.format(" {X: %.2f}", dol.getWorldLocation().x());
-		String ds3Y = String.format(" {Y: %.2f}", dol.getWorldLocation().y());
-		String ds3Z = String.format(" {Z: %.2f}", dol.getWorldLocation().z());
-		String dispStr3 = "Dolphin:" + ds3X + ds3Y + ds3Z;
+		String ds3X = String.format(" {X: %.2f}", plyr.getWorldLocation().x());
+		String ds3Y = String.format(" {Y: %.2f}", plyr.getWorldLocation().y());
+		String ds3Z = String.format(" {Z: %.2f}", plyr.getWorldLocation().z());
+		String dispStr3 = "Player:" + ds3X + ds3Y + ds3Z;
 
 		Vector3f hud1Color = new Vector3f(1,1,1);
 		Vector3f hud2Color = new Vector3f(1,1,1);
@@ -757,9 +759,9 @@ public class MazeGame extends VariableFrameRateGame {
 
 	public ProtocolClient getProtClient() { return networkClient.getProtClient(); }
 
-	public GameObject getPlayer() { return dol; }
+	public GameObject getPlayer() { return plyr; }
 
-	public Vector3f getPlayerPosition() { return dol.getWorldLocation(); }
+	public Vector3f getPlayerPosition() { return plyr.getWorldLocation(); }
 
 	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
 	
