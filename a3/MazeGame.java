@@ -49,7 +49,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private GameObject dol, x, y, z, groundPlane, foodTorus;
 	private ObjShape dolS, linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
-	private TextureImage doltx, fstx, terrTx;
+	private TextureImage doltx, fstx, terrTx, forestFloor;
 	private int spaceBox;
 	private TerrainPlane terrain;
 
@@ -134,7 +134,7 @@ public class MazeGame extends VariableFrameRateGame {
 		
 		foodStationS = new ManualFoodStation();
 
-		groundPlaneS = new Plane();
+		groundPlaneS = new TerrainPlane(1000);
 
 		foodTorusS = new Torus(1.0f, 1.0f,48);
 
@@ -143,8 +143,8 @@ public class MazeGame extends VariableFrameRateGame {
 
 	@Override
 	public void loadTextures() {
-		doltx = new TextureImage("Dolphin_HighPolyUV.png");
 		fstx = new TextureImage("Drawer_Door.jpg");
+		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
 		terrTx = new TextureImage("Height map test.jpg");
 		customTextures.add(new TextureImage("Wood_Desk.png"));
 		customTextures.add(new TextureImage("Floral_Sheet.png"));
@@ -205,6 +205,10 @@ public class MazeGame extends VariableFrameRateGame {
 		upateElapsedTimeInfo(); // elapsed time for only the current render and previous render
 		
 		checkGameOver();
+
+		Vector3f loc = dol.getWorldLocation();
+		float height = groundPlane.getHeight(loc.x(), loc.z());
+		dol.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
 
 		scriptFactory.update("js");
 		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
@@ -288,20 +292,14 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	private void buildGroundPlane() {
-		terrain = new TerrainPlane();
-		groundPlane = new GameObject(GameObject.root(), terrain);
-
-		groundPlane.setIsTerrain(true);
-		groundPlane.setHeightMap(terrTx);
-
-		// Not ouputting the correct color for some reason!!!
-		(groundPlane.getRenderStates()).setColor(new Vector3f(0f, 0.5608f, 1f)); 
-	
+		groundPlane = new GameObject(GameObject.root(), groundPlaneS, forestFloor);
 		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound);
 		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -5f, 0f);
 
 		groundPlane.setLocalScale(initialScale);
 		groundPlane.setLocalTranslation(initialTranslation);
+
+		groundPlane.setHeightMap(terrTx);
 	}
 
 	/**
