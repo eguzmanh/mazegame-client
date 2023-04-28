@@ -49,6 +49,7 @@ public class FwdBwdAction extends AbstractInputAction {
         if(evtName.equals("W") || evtValue < -deadzone) {
             newSpeed *= 1;
             System.out.println("Moving Forward");
+            game.animationToggle();
         } 
         
         else if(evtName.equals("S") || evtValue > deadzone) {

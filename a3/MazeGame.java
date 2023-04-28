@@ -48,10 +48,11 @@ public class MazeGame extends VariableFrameRateGame {
 	private double lastFrameTime, currFrameTime, elapsTime;
 
 	private GameObject plyr, x, y, z, groundPlane, foodTorus;
-	private ObjShape plyrS, linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
+	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
 	private TextureImage plyrtx, fstx, terrTx, forestFloor;
 	private int spaceBox;
 	private TerrainPlane terrain;
+	private AnimatedShape plyrS;
 
 	private Light light1;
 
@@ -124,8 +125,8 @@ public class MazeGame extends VariableFrameRateGame {
 	******************************************************/
 	@Override
 	public void loadShapes() {
-		plyrS = new ImportedModel("BasicGuy.obj");
-
+		plyrS = new AnimatedShape("BasicGuy2.rkm","BasicGuy2.rks");
+		plyrS.loadAnimation("WALK", "BasicGuy2.rka");
 		linxS = new Line(new Vector3f(-gameworldEdgeBound,0f,0f), new Vector3f(gameworldEdgeBound,0f,0f)); 
 		linyS = new Line(new Vector3f(0f,-gameworldEdgeBound,0f), new Vector3f(0f,gameworldEdgeBound,0f)); 
 		linzS = new Line(new Vector3f(0f,0f,-gameworldEdgeBound), new Vector3f(0f,0f,gameworldEdgeBound));
@@ -143,6 +144,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	@Override
 	public void loadTextures() {
+		plyrtx = new TextureImage("Basic Guy UV.jpg");
 		fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
 		terrTx = new TextureImage("Height map test.jpg");
@@ -217,6 +219,8 @@ public class MazeGame extends VariableFrameRateGame {
 		
 		// Orbit controller for the Player
 		orbit3DController.updateCameraPosition();
+
+		plyrS.updateAnimation();
 		
 		validatePrizeCollisions();
 		validateFoodStationCollisions();
@@ -269,7 +273,7 @@ public class MazeGame extends VariableFrameRateGame {
 		Matrix4f initialTranslation, initialScale, initialRotation;
 	
 		// build Player in the center of the window
-		plyr = new GameObject(GameObject.root(), plyrS);
+		plyr = new GameObject(GameObject.root(), plyrS, plyrtx);
 		networkClient.setGhostShape(plyrS);
 		networkClient.setGhostTexture(plyrtx);
 		initialTranslation = (new Matrix4f()).translation(-1f,minGameObjectYLoc,1f); 
@@ -293,7 +297,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private void buildGroundPlane() {
 		groundPlane = new GameObject(GameObject.root(), groundPlaneS, forestFloor);
-		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound);
+		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound, 30.0f, gameworldEdgeBound);
 		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -5f, 0f);
 
 		groundPlane.setLocalScale(initialScale);
@@ -479,6 +483,7 @@ public class MazeGame extends VariableFrameRateGame {
 	/** 
 	 * These public methods will allow the Actions to be called to be called while encapsulating the implementation
 	 */
+	public void animationToggle() { _animationToggle(); }
 
 	public void shutdownAction() { _shutdownAction(); } 
 
@@ -498,6 +503,10 @@ public class MazeGame extends VariableFrameRateGame {
 	
 	public void eatAction() { _eatAction(); }
 
+	private void _animationToggle() {
+		plyrS.stopAnimation();
+		plyrS.playAnimation("WALK", 0.5f, AnimatedShape.EndType.LOOP, 0);
+	}
 
 	private void _shutdownAction() {
 		shutdown();
@@ -542,7 +551,8 @@ public class MazeGame extends VariableFrameRateGame {
 		if(newLocation.y() <= minGameObjectYLoc) { 
 			newLocation.set(newLocation.x(), minGameObjectYLoc, newLocation.z());
 		}
-		plyr.setLocalLocation(newLocation); 
+		plyr.setLocalLocation(newLocation);
+		
 	}
 
 	private void _axisLinesAction(boolean axisLinesEnabled) {
@@ -738,7 +748,6 @@ public class MazeGame extends VariableFrameRateGame {
 
 	// Check if the game is suspended
 	public boolean isSuspended() {return isPaused() || isGameOver(); }
-
 
 	// ************************ Network methods *********************************
 	public ObjShape getGhostShape() {
