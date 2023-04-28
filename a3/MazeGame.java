@@ -47,9 +47,9 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean isMounted, paused, isInPlayerBounds, gameOver;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject plyr, x, y, z, groundPlane, foodTorus;
-	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS;
-	private TextureImage plyrtx, fstx, terrTx, forestFloor;
+	private GameObject plyr, x, y, z, groundPlane, foodTorus, maze;
+	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS;
+	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx;
 	private int spaceBox;
 	private TerrainPlane terrain;
 	private AnimatedShape plyrS;
@@ -137,6 +137,8 @@ public class MazeGame extends VariableFrameRateGame {
 
 		groundPlaneS = new TerrainPlane(1000);
 
+		mazeS = new ImportedModel("maze1.obj");
+
 		foodTorusS = new Torus(1.0f, 1.0f,48);
 
 		// ((Plane)groundPlaneS).setPlaneSize(new Vector3f(0f,0f,-1000f), new Vector3f(0f,0f,1000f));
@@ -150,6 +152,7 @@ public class MazeGame extends VariableFrameRateGame {
 		terrTx = new TextureImage("Height map test.jpg");
 		customTextures.add(new TextureImage("Wood_Desk.png"));
 		customTextures.add(new TextureImage("Floral_Sheet.png"));
+		mazeTx = new TextureImage("forest_floor_diff_4k.jpg");
 	}
 
 	@Override
@@ -162,11 +165,12 @@ public class MazeGame extends VariableFrameRateGame {
 	@Override
 	public void buildObjects() {	
 		buildWorldAxisLines();
-		buildGroundPlane();
+		//buildGroundPlane();
 		buildPlayer();
 		buildPrizes();
 		buildFoodStations();	
 		buildFoodTorus();
+		buildMaze();
 	}
 
 	@Override
@@ -209,7 +213,7 @@ public class MazeGame extends VariableFrameRateGame {
 		checkGameOver();
 
 		Vector3f loc = plyr.getWorldLocation();
-		float height = groundPlane.getHeight(loc.x(), loc.z());
+		float height = maze.getHeight(loc.x(), loc.z());
 		plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
 
 		scriptFactory.update("js");
@@ -306,6 +310,16 @@ public class MazeGame extends VariableFrameRateGame {
 		groundPlane.setHeightMap(terrTx);
 		
 		groundPlane.getRenderStates().setTiling(1);
+	}
+
+	private void buildMaze() {
+		maze = new GameObject(GameObject.root(), mazeS, mazeTx);
+		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound, 30.0f, gameworldEdgeBound);
+		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -5f, 0f);
+
+		maze.setLocalScale(initialScale);
+		maze.setLocalTranslation(initialTranslation);
+		maze.getRenderStates().setTiling(1);
 	}
 
 	/**
