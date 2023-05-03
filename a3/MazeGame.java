@@ -161,10 +161,10 @@ public class MazeGame extends VariableFrameRateGame {
 		plyrtx = new TextureImage("Basic Guy UV.jpg");
 		fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
-		terrTx = new TextureImage("Height map test.jpg");
+		terrTx = new TextureImage("heightMap_v2.jpg");
 		customTextures.add(new TextureImage("Wood_Desk.png"));
 		customTextures.add(new TextureImage("Floral_Sheet.png"));
-		mazeTx = new TextureImage("forest_floor_diff_4k.jpg");
+		mazeTx = new TextureImage("rustic_stone_wall_diff_4k.jpg");
 	}
 
 	@Override
@@ -177,7 +177,7 @@ public class MazeGame extends VariableFrameRateGame {
 	@Override
 	public void buildObjects() {	
 		buildWorldAxisLines();
-		//buildGroundPlane();
+		buildGroundPlane();
 		buildPlayer();
 		buildPrizes();
 		buildFoodStations();	
@@ -319,8 +319,8 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private void buildGroundPlane() {
 		groundPlane = new GameObject(GameObject.root(), groundPlaneS, forestFloor);
-		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound, 30.0f, gameworldEdgeBound);
-		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -5f, 0f);
+		Matrix4f initialScale = (new Matrix4f()).scaling(500.0f, 30.0f, 500.0f);
+		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -3f, 0f);
 
 		groundPlane.setLocalScale(initialScale);
 		groundPlane.setLocalTranslation(initialTranslation);
@@ -331,13 +331,14 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	private void buildMaze() {
-		maze = new GameObject(GameObject.root(), mazeS, mazeTx);
-		Matrix4f initialScale = (new Matrix4f()).scaling(gameworldEdgeBound, 30.0f, gameworldEdgeBound);
-		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, -5f, 0f);
+		Matrix4f initialTranslation, initialScale;
 
-		maze.setLocalScale(initialScale);
+		maze = new GameObject(GameObject.root(), mazeS, mazeTx);
+		initialTranslation = (new Matrix4f()).translation(0f, -1f, 0f);
+		initialScale = (new Matrix4f()).scaling(50.0f);
+
 		maze.setLocalTranslation(initialTranslation);
-		maze.getRenderStates().setTiling(1);
+		maze.setLocalScale(initialScale);
 	}
 
 	/**
