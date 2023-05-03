@@ -1,6 +1,12 @@
 package a3;
 
 import tage.*;
+import tage.audio.AudioManagerFactory;
+import tage.audio.AudioResource;
+import tage.audio.AudioResourceType;
+import tage.audio.IAudioManager;
+import tage.audio.Sound;
+import tage.audio.SoundType;
 import tage.input.InputManager;
 import tage.input.action.AbstractInputAction;
 import tage.networking.IGameConnection.ProtocolType;
@@ -83,6 +89,12 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean isClientConnected = false;
 
 	private NetworkClient networkClient;
+
+	//audio stuff
+	private IAudioManager audioMgr;
+	private Sound rainSound, walkSound;
+	private Vector3f rainDirection = new Vector3f(10, 0, 13);
+	private boolean isWalking;
 	
 
 	public MazeGame(String serverAddress, int serverPort, String protocol) { 
@@ -198,6 +210,7 @@ public class MazeGame extends VariableFrameRateGame {
 	@Override
 	public void initializeGame() {	
 		initEngineComponents();
+		initAudio();
 		initMainInputManagerActions();  // handle the Input Manager detection
 		foodTorusAzimuth = 0.0f;
 		foodTorusElevation = 0.0f;
@@ -236,6 +249,11 @@ public class MazeGame extends VariableFrameRateGame {
 		// build and set HUD
 		buildHUDs();
 		processNetworking((float)elapsTime);
+
+		//update sound
+		walkSound.setLocation(plyr.getWorldLocation());
+		rainSound.setEmitDirection(rainDirection, 180f);
+		setEarParamenters();
 	}
 	
 	/******************************************************
@@ -413,6 +431,41 @@ public class MazeGame extends VariableFrameRateGame {
 		currFrameTime = System.currentTimeMillis();
 	}
 
+	public void initAudio(){
+		AudioResource resource1, resource2;
+		audioMgr = AudioManagerFactory.createAudioManager("tage.audio.joal.JOALAudioManager");
+
+		if(!audioMgr.initialize()){
+			System.out.println("Audio Manager failed to initialize");
+			return;
+		}
+		resource1 = audioMgr.createAudioResource("assets/audio/indoor-footsteps-6385.wav", AudioResourceType.AUDIO_SAMPLE);
+		resource2 = audioMgr.createAudioResource("assets/audio/heavy-rain-on-wooden-doors-55063.wav", AudioResourceType.AUDIO_SAMPLE);
+
+		walkSound = new Sound(resource1, SoundType.SOUND_EFFECT, 100, true);
+		rainSound = new Sound(resource2, SoundType.SOUND_EFFECT, 25, true);
+
+		walkSound.initialize(audioMgr);
+		rainSound.initialize(audioMgr);
+		walkSound.setMaxDistance(1.0f);
+		walkSound.setMinDistance(0.0f);
+		walkSound.setRollOff(5.0f);
+		rainSound.setMaxDistance(10.0f);
+		rainSound.setMinDistance(0.5f);
+		rainSound.setRollOff(5.0f);
+
+		walkSound.setLocation(plyr.getWorldLocation());
+		rainSound.setLocation(new Vector3f(10,0,13));
+		setEarParamenters();
+
+		rainSound.play();
+	}
+
+	public void setEarParamenters(){
+		audioMgr.getEar().setLocation(plyr.getWorldLocation());
+		audioMgr.getEar().setOrientation(engineCamera.getN(), new Vector3f(0.0f, 1.0f, 0.0f));
+	}
+
 	private void initEngineComponents() {
 		engineIM = engine.getInputManager();
 		initViewportCameras();
@@ -497,7 +550,9 @@ public class MazeGame extends VariableFrameRateGame {
 	/** 
 	 * These public methods will allow the Actions to be called to be called while encapsulating the implementation
 	 */
-	public void animationToggle() { _animationToggle(); }
+	public void animationToggle(boolean isAnimated) { _animationToggle(isAnimated); }
+
+	public void walkSound(boolean isWalking) { _walkSound(isWalking); }
 
 	public void shutdownAction() { _shutdownAction(); } 
 
@@ -517,9 +572,21 @@ public class MazeGame extends VariableFrameRateGame {
 	
 	public void eatAction() { _eatAction(); }
 
-	private void _animationToggle() {
-		plyrS.stopAnimation();
-		plyrS.playAnimation("WALK", 0.5f, AnimatedShape.EndType.LOOP, 0);
+	private void _walkSound(boolean isWalking){
+		if(isWalking){
+			walkSound.play();
+		} else {
+			walkSound.stop();
+		}
+	}
+
+	private void _animationToggle(boolean isAnimated) {
+		if(isAnimated){
+			plyrS.stopAnimation();
+			plyrS.playAnimation("WALK", 0.2f, AnimatedShape.EndType.LOOP, 0);
+		} else {
+			plyrS.stopAnimation();
+		}
 	}
 
 	private void _shutdownAction() {
@@ -788,4 +855,24 @@ public class MazeGame extends VariableFrameRateGame {
 
 	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
 	
+	@Override
+	public void keyPressed(KeyEvent e){
+		switch (e.getKeyCode()){
+			case KeyEvent.VK_W:{
+				animationToggle(true);
+				walkSound(true);
+				break;
+			}
+		}
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		switch (e.getKeyCode()) {
+			case KeyEvent.VK_W:
+				animationToggle(false);
+				walkSound(false);
+				break;
+		}
+	}
 }
