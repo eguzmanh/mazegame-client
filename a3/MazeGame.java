@@ -65,7 +65,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private GameObject plyr, x, y, z, groundPlane, foodTorus, maze;
 	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS;
-	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npctx;
+	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npcTx;
 	private int spaceBox;
 	private TerrainPlane terrain;
 	private AnimatedShape plyrS;
@@ -162,7 +162,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 		// foodTorusS = new Torus(1.0f, 1.0f,48);
 
-		npcS = new ImportedModel("Ghost.obj");
+		npcS = new ImportedModel("GhostNew.obj");
 
 		// ((Plane)groundPlaneS).setPlaneSize(new Vector3f(0f,0f,-1000f), new Vector3f(0f,0f,1000f));
 	}
@@ -170,13 +170,13 @@ public class MazeGame extends VariableFrameRateGame {
 	@Override
 	public void loadTextures() {
 		plyrtx = new TextureImage("Basic Guy UV.jpg");
-		// npctx = new TextureImage("")
 		// fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
 		terrTx = new TextureImage("heightMap_v2.jpg");
 		// customTextures.add(new TextureImage("Wood_Desk.png"));
 		// customTextures.add(new TextureImage("Floral_Sheet.png"));
 		mazeTx = new TextureImage("rustic_stone_wall_diff_4k.jpg");
+		npcTx = new TextureImage("Ghost UV.jpg");
 	}
 
 	@Override
@@ -277,7 +277,6 @@ public class MazeGame extends VariableFrameRateGame {
 	 * 				* Helper functions for setup
 	******************************************************/
 
-
 	// A lot of this data can be used in the scripts when implemented
 	private void initGameVariables() {
 		// isMounted = false;
@@ -327,6 +326,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private void buildNPCGhost() {
 		// npc = new GhostNPC(0, npcS, new Vector3f(0.0f, 2.0f, 0.0f));
 		networkClient.setNPCshape(npcS);
+		networkClient.setNPCtexture(npcTx);
 	}
 	
 	private void buildWorldAxisLines() {
@@ -1004,7 +1004,6 @@ public class MazeGame extends VariableFrameRateGame {
 	public ObjShape getGhostShape() {
 		return networkClient.getGhostShape();
 	}
-
 	
 	public TextureImage getGhostTexture() {
 		return networkClient.getGhostTexture();
@@ -1016,6 +1015,10 @@ public class MazeGame extends VariableFrameRateGame {
 
 	public ObjShape getNPCshape() {
 		return networkClient.getNPCshape();
+	}
+
+	public TextureImage getNPCtexture() {
+		return networkClient.getNPCtexture();
 	}
 
 	public Engine getEngine() { return engine; }
@@ -1030,9 +1033,6 @@ public class MazeGame extends VariableFrameRateGame {
 
 	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
 
-	// public ObjectShape getNPCshape() {}
-	// public void TexturegetNPCtexture() {}
-	
 	@Override
 	public void keyPressed(KeyEvent e){
 		switch (e.getKeyCode()){

@@ -51,7 +51,7 @@ public class NetworkClient {
 	public TextureImage getNPCtexture() { return npcTx; }
 
 	public void setNPCshape(ObjShape shape) { npcS = shape; }
-	// public void setNPCtexture(TextureImage texture) { ghostTx = texture; }
+	public void setNPCtexture(TextureImage texture) { npcTx = texture; }
     public void setGhostShape(ObjShape ghostShape) { ghostS = ghostShape; }
 	public void setGhostTexture(TextureImage ghostTexture) { ghostTx = ghostTexture; }
 
