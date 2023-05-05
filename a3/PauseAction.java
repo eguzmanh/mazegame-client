@@ -18,7 +18,7 @@ public class PauseAction extends AbstractInputAction {
     public void associateDeviceInputs() {
         // Pause action
 		 game.getEngineInputManager().associateActionWithAllKeyboards( 
-			net.java.games.input.Component.Identifier.Key.SPACE, this, 
+			net.java.games.input.Component.Identifier.Key.P, this, 
 			InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 		 game.getEngineInputManager().associateActionWithAllGamepads( 
 			net.java.games.input.Component.Identifier.Button._7, this, 
