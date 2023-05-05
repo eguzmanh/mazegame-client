@@ -54,8 +54,8 @@ public class MazeGame extends VariableFrameRateGame {
 	private double lastFrameTime, currFrameTime, elapsTime;
 
 	private GameObject plyr, x, y, z, groundPlane, foodTorus, maze;
-	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS;
-	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx;
+	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS;
+	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npctx;
 	private int spaceBox;
 	private TerrainPlane terrain;
 	private AnimatedShape plyrS;
@@ -95,6 +95,8 @@ public class MazeGame extends VariableFrameRateGame {
 	private Sound rainSound, walkSound;
 	private Vector3f rainDirection = new Vector3f(10, 0, 13);
 	private boolean isWalking;
+
+	private GhostNPC npc;
 	
 
 	public MazeGame(String serverAddress, int serverPort, String protocol) { 
@@ -106,13 +108,6 @@ public class MazeGame extends VariableFrameRateGame {
 		foodStations = new ArrayList<FoodStation>(); // allows dynamic number of food stations
 
 		networkClient = new NetworkClient(this, serverAddress, serverPort, protocol);
-		// gm = new GhostManager(this);
-		// this.serverAddress = serverAddress;
-		// this.serverPort = serverPort;
-		// if (protocol.toUpperCase().compareTo("TCP") == 0)
-		// 	this.serverProtocol = ProtocolType.TCP;
-		// else
-		// 	this.serverProtocol = ProtocolType.UDP;
 	}
 
 	public static void main(String[] args) {	
@@ -121,8 +116,6 @@ public class MazeGame extends VariableFrameRateGame {
 		game.initializeSystem();
 		game.game_loop();
 	}
-
-
 
 	public void initScriptEngine() {
 		scriptFactory = new ScriptFactory();
@@ -143,15 +136,17 @@ public class MazeGame extends VariableFrameRateGame {
 		linyS = new Line(new Vector3f(0f,-gameworldEdgeBound,0f), new Vector3f(0f,gameworldEdgeBound,0f)); 
 		linzS = new Line(new Vector3f(0f,0f,-gameworldEdgeBound), new Vector3f(0f,0f,gameworldEdgeBound));
 
-		prizeS = new Sphere();
+		// prizeS = new Sphere();
 		
-		foodStationS = new ManualFoodStation();
+		// foodStationS = new ManualFoodStation();
 
 		groundPlaneS = new TerrainPlane(1000);
 
 		mazeS = new ImportedModel("maze1.obj");
 
-		foodTorusS = new Torus(1.0f, 1.0f,48);
+		// foodTorusS = new Torus(1.0f, 1.0f,48);
+
+		npcS = new ImportedModel("Ghost.obj");
 
 		// ((Plane)groundPlaneS).setPlaneSize(new Vector3f(0f,0f,-1000f), new Vector3f(0f,0f,1000f));
 	}
@@ -159,11 +154,12 @@ public class MazeGame extends VariableFrameRateGame {
 	@Override
 	public void loadTextures() {
 		plyrtx = new TextureImage("Basic Guy UV.jpg");
-		fstx = new TextureImage("Drawer_Door.jpg");
+		// npctx = new TextureImage("")
+		// fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
 		terrTx = new TextureImage("heightMap_v2.jpg");
-		customTextures.add(new TextureImage("Wood_Desk.png"));
-		customTextures.add(new TextureImage("Floral_Sheet.png"));
+		// customTextures.add(new TextureImage("Wood_Desk.png"));
+		// customTextures.add(new TextureImage("Floral_Sheet.png"));
 		mazeTx = new TextureImage("rustic_stone_wall_diff_4k.jpg");
 	}
 
@@ -179,9 +175,10 @@ public class MazeGame extends VariableFrameRateGame {
 		buildWorldAxisLines();
 		buildGroundPlane();
 		buildPlayer();
-		buildPrizes();
-		buildFoodStations();	
-		buildFoodTorus();
+		// buildPrizes();
+		// buildFoodStations();	
+		// buildFoodTorus();
+		buildNPCGhost();
 		buildMaze();
 	}
 
@@ -212,9 +209,9 @@ public class MazeGame extends VariableFrameRateGame {
 		initEngineComponents();
 		initAudio();
 		initMainInputManagerActions();  // handle the Input Manager detection
-		foodTorusAzimuth = 0.0f;
-		foodTorusElevation = 0.0f;
-		foodTorusRadius = 4.0f;
+		// foodTorusAzimuth = 0.0f;
+		// foodTorusElevation = 0.0f;
+		// foodTorusRadius = 4.0f;
 		networkClient.setupNetworking();
 	}
 
@@ -224,32 +221,32 @@ public class MazeGame extends VariableFrameRateGame {
 		upateElapsedTimeInfo(); // elapsed time for only the current render and previous render
 		
 		checkGameOver();
-
+		
 		Vector3f loc = plyr.getWorldLocation();
 		float height = maze.getHeight(loc.x(), loc.z());
 		plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
-
+		
 		scriptFactory.update("js");
 		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
-
+		
 		if (suspendGame()) return;
 		
 		// Orbit controller for the Player
 		orbit3DController.updateCameraPosition();
-
+		
 		plyrS.updateAnimation();
 		
-		validatePrizeCollisions();
-		validateFoodStationCollisions();
+		// validatePrizeCollisions();
+		// validateFoodStationCollisions();
 		
-		decreaseFoodLevel(); // ensures that player eata from food stations in order to win
+		// decreaseFoodLevel(); // ensures that player eata from food stations in order to win
 		
-		rotateTorusIfFoodAvailable();
+		// rotateTorusIfFoodAvailable();
 
 		// build and set HUD
 		buildHUDs();
 		processNetworking((float)elapsTime);
-
+		
 		//update sound
 		walkSound.setLocation(plyr.getWorldLocation());
 		rainSound.setEmitDirection(rainDirection, 180f);
@@ -306,6 +303,11 @@ public class MazeGame extends VariableFrameRateGame {
 		plyr.setLocalRotation(initialRotation); 
 		plyr.setLocalScale(initialScale);
 	}
+
+	private void buildNPCGhost() {
+		// npc = new GhostNPC(0, npcS, new Vector3f(0.0f, 2.0f, 0.0f));
+		networkClient.setNPCshape(npcS);
+	}
 	
 	private void buildWorldAxisLines() {
 		x = new GameObject(GameObject.root(), linxS); 
@@ -345,42 +347,43 @@ public class MazeGame extends VariableFrameRateGame {
 	 * This function uses an int to determine the number of prizes to load in the game
 	 * The prizes will render with a random translation, rotation, and scale 
 	*/
-	private void buildPrizes() {	
+	// private void buildPrizes() {	
 
-		for(int i = 0; i < numPrizes; i++) {
-			System.out.println("Loading prize: " + i);
-			Prize tempO = new Prize(GameObject.root(), prizeS, getRandomCustomTexture());
-			setObjectTRS(tempO, 3f);
-		}
-	}
+	// 	for(int i = 0; i < numPrizes; i++) {
+	// 		System.out.println("Loading prize: " + i);
+	// 		Prize tempO = new Prize(GameObject.root(), prizeS, getRandomCustomTexture());
+	// 		setObjectTRS(tempO, 3f);
+	// 	}
+	// }
 	
 	/**
 	 * This function uses an int to determine the number of foodstations to load in the game
 	 * The food stations will render with a random translation, rotation, and scale 
 	*/
-	private void buildFoodStations() {	
-		for(int i = 0; i < numFoodStations; i++) {
-			System.out.println("Loadin food station: " + i);
-			FoodStation fsO = new FoodStation(GameObject.root(), foodStationS, fstx);
-			setObjectTRS(fsO, 3.5f);
-		}
-	}
+	// private void buildFoodStations() {	
+	// 	for(int i = 0; i < numFoodStations; i++) {
+	// 		System.out.println("Loadin food station: " + i);
+	// 		FoodStation fsO = new FoodStation(GameObject.root(), foodStationS, fstx);
+	// 		setObjectTRS(fsO, 3.5f);
+	// 	}
+	// }
 
-	private void buildFoodTorus() {
-		// Adding Hierarchy
-		Matrix4f initialTranslation, initialScale, initialRotation;
-		foodTorus = new GameObject(GameObject.root(), foodTorusS);
-		// initialTranslation = (new Matrix4f()).translation(-3,0,0);
-		initialScale = (new Matrix4f()).scaling(0.07f);
-		// foodTorus.setLocalTranslation(initialTranslation); 
-		foodTorus.setLocalScale(initialScale);
-		foodTorus.setParent(plyr); 
-		foodTorus.propagateTranslation(false); 
-		foodTorus.propagateRotation(false); 
-		foodTorus.applyParentRotationToPosition(false); 
-		foodTorus.getRenderStates().setTiling(1);
+	// private void buildFoodTorus() {
+	// 	// Adding Hierarchy
+	// 	Matrix4f initialTranslation, initialScale, initialRotation;
+	// 	foodTorus = new GameObject(GameObject.root(), foodTorusS);
+	// 	// initialTranslation = (new Matrix4f()).translation(-3,0,0);
+	// 	initialScale = (new Matrix4f()).scaling(0.07f);
+	// 	// foodTorus.setLocalTranslation(initialTranslation); 
+	// 	foodTorus.setLocalScale(initialScale);
+	// 	foodTorus.setParent(plyr); 
+	// 	foodTorus.propagateTranslation(false); 
+	// 	foodTorus.propagateRotation(false); 
+	// 	foodTorus.applyParentRotationToPosition(false); 
+	// 	foodTorus.getRenderStates().setTiling(1);
 		
-	}
+	// }
+
 	// Used to set the random positions for the prizes and food stations
 	private void setObjectTRS(GameObject wgo, float translationYAmnt) {
 		Matrix4f initialTranslation, initialScale, initialRotation;
@@ -440,6 +443,7 @@ public class MazeGame extends VariableFrameRateGame {
 			System.out.println("Audio Manager failed to initialize");
 			return;
 		}
+
 		resource1 = audioMgr.createAudioResource("assets/audio/indoor-footsteps-6385.wav", AudioResourceType.AUDIO_SAMPLE);
 		resource2 = audioMgr.createAudioResource("assets/audio/heavy-rain-on-wooden-doors-55063.wav", AudioResourceType.AUDIO_SAMPLE);
 
@@ -500,14 +504,14 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 	private void initNodeControllers() {
 		// rotation controller used for when a prize or foodstation is collided with
-		rc = new RotationController(engine, new Vector3f(0,1,0), 0.001f);
-		rc.enable(); // turn on the rotation controller
+		// rc = new RotationController(engine, new Vector3f(0,1,0), 0.001f);
+		// rc.enable(); // turn on the rotation controller
 
-		bc = new BounceController(engine, 4f);
-		bc.enable(); // turn on the rotation controller
+		// bc = new BounceController(engine, 4f);
+		// bc.enable(); // turn on the rotation controller
 
-		(engine.getSceneGraph()).addNodeController(rc); 
-		(engine.getSceneGraph()).addNodeController(bc); 
+		// (engine.getSceneGraph()).addNodeController(rc); 
+		// (engine.getSceneGraph()).addNodeController(bc); 
 	}
 	private void init3DOrbitController() {
 		// ------------- setup 3d Orbit Controller for the main camera -------------
@@ -530,7 +534,7 @@ public class MazeGame extends VariableFrameRateGame {
 		FwdBwdAction fwdbwdActionCmd = new FwdBwdAction(this); 
 		TurnAction turnActionCmd = new TurnAction(this); 
 		// PitchAction pitchActionCmd = new PitchAction(this); 
-		EatAction eatActionCmd = new EatAction(this);
+		// EatAction eatActionCmd = new EatAction(this);
 
 		shutdownActionCmd.associateDeviceInputs();
 		screenModeToggleActionCmd.associateDeviceInputs();
@@ -541,7 +545,7 @@ public class MazeGame extends VariableFrameRateGame {
 		fwdbwdActionCmd.associateDeviceInputs();
 		turnActionCmd.associateDeviceInputs();
 		// pitchActionCmd.associateDeviceInputs();
-		eatActionCmd.associateDeviceInputs();
+		// eatActionCmd.associateDeviceInputs();
 	}
 
 	
@@ -571,7 +575,7 @@ public class MazeGame extends VariableFrameRateGame {
 	
 	public void axisLinesAction(boolean axisLinesEnabled) { _axisLinesAction(axisLinesEnabled); }
 	
-	public void eatAction() { _eatAction(); }
+	// public void eatAction() { _eatAction(); }
 
 	private void _walkSound(boolean isWalking){
 		if(isWalking){
@@ -649,39 +653,39 @@ public class MazeGame extends VariableFrameRateGame {
 		}
 	}
 
-	private void _eatAction() {
-		if (foodStorageBuf > 0.0f) {
-			foodLevel += foodStorageBuf;
-			foodStorageBuf = 0.0f;
-			foodStorageEmpty = true;
-		}
-	}
+	// private void _eatAction() {
+	// 	if (foodStorageBuf > 0.0f) {
+	// 		foodLevel += foodStorageBuf;
+	// 		foodStorageBuf = 0.0f;
+	// 		foodStorageEmpty = true;
+	// 	}
+	// }
 	/******************************************************
 	 * 		* Helper functions for the update steps
 	******************************************************/
 	
-	private void rotateTorusIfFoodAvailable() {
-		if(foodStorageEmpty) {
-			if ((foodTorus.getRenderStates()).isEnabled()) { (foodTorus.getRenderStates()).disableRendering(); } 
-			return;
-		}
+	// private void rotateTorusIfFoodAvailable() {
+	// 	if(foodStorageEmpty) {
+	// 		if ((foodTorus.getRenderStates()).isEnabled()) { (foodTorus.getRenderStates()).disableRendering(); } 
+	// 		return;
+	// 	}
 
-		if (!(foodTorus.getRenderStates()).isEnabled()) { (foodTorus.getRenderStates()).enableRendering(); }
+	// 	if (!(foodTorus.getRenderStates()).isEnabled()) { (foodTorus.getRenderStates()).enableRendering(); }
 
-		float rotAmount = 10f;
-		foodTorusAzimuth += rotAmount; 
-		foodTorusAzimuth = foodTorusAzimuth % 360; 
+	// 	float rotAmount = 10f;
+	// 	foodTorusAzimuth += rotAmount; 
+	// 	foodTorusAzimuth = foodTorusAzimuth % 360; 
 
-		double theta = Math.toRadians(foodTorusAzimuth); 
-		double phi = Math.toRadians(foodTorusElevation); 
+	// 	double theta = Math.toRadians(foodTorusAzimuth); 
+	// 	double phi = Math.toRadians(foodTorusElevation); 
 
-		float x = foodTorusRadius * (float)(Math.cos(phi) * Math.sin(theta)); 
-		float y = foodTorusRadius * (float)(Math.sin(phi)); 
-		float z = foodTorusRadius * (float)(Math.cos(phi) * Math.cos(theta)); 
+	// 	float x = foodTorusRadius * (float)(Math.cos(phi) * Math.sin(theta)); 
+	// 	float y = foodTorusRadius * (float)(Math.sin(phi)); 
+	// 	float z = foodTorusRadius * (float)(Math.cos(phi) * Math.cos(theta)); 
 
-		foodTorus.setLocalLocation(new Vector3f(x,y,z).add(plyr.getWorldLocation())); 
+	// 	foodTorus.setLocalLocation(new Vector3f(x,y,z).add(plyr.getWorldLocation())); 
 		
-	}
+	// }
 	
 	/**
 	 * Ensures that prizes cannot be collected during a collision if certain criteria is not met
@@ -689,38 +693,38 @@ public class MazeGame extends VariableFrameRateGame {
 	 * If a successful collision occurs, the prizeCounter is incremented 
 	 * The comparison is done by checking the distance between the camera and the prize object
 	 */
-	private void validatePrizeCollisions() {
-		if (preventPrizeCollection()) return;
-		Vector3f plyrLoc = plyr.getLocalLocation();
-		for (Prize go : prizes) {
-			if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
-				System.out.println("Collision detected!!");
-				go.disable();
-				rc.addTarget(go);
-				prizeCounter++;
-			}
-		}
-	}
+	// private void validatePrizeCollisions() {
+	// 	if (preventPrizeCollection()) return;
+	// 	Vector3f plyrLoc = plyr.getLocalLocation();
+	// 	for (Prize go : prizes) {
+	// 		if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
+	// 			System.out.println("Collision detected!!");
+	// 			go.disable();
+	// 			rc.addTarget(go);
+	// 			prizeCounter++;
+	// 		}
+	// 	}
+	// }
 
 	/**
 	 * Iterates through the Food Station Array List and will go through collision detection
 	 * A player must be OFF the Player to collect the food source
 	 */
-	private void validateFoodStationCollisions() {
-		// if (isMounted) return;
-		Vector3f plyrLoc = plyr.getLocalLocation();
-		for (FoodStation go : foodStations) {
-			if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
-				System.out.println("Collision detected!!");
-				bc.addTarget(go);
-				rc.addTarget(go);
+	// private void validateFoodStationCollisions() {
+	// 	// if (isMounted) return;
+	// 	Vector3f plyrLoc = plyr.getLocalLocation();
+	// 	for (FoodStation go : foodStations) {
+	// 		if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
+	// 			System.out.println("Collision detected!!");
+	// 			bc.addTarget(go);
+	// 			rc.addTarget(go);
 
-				go.disable();
-				foodStorageBuf += go.getProportion();
-				if(foodStorageEmpty) foodStorageEmpty = false;
-			}
-		}
-	}
+	// 			go.disable();
+	// 			foodStorageBuf += go.getProportion();
+	// 			if(foodStorageEmpty) foodStorageEmpty = false;
+	// 		}
+	// 	}
+	// }
 
 	/**
 	 * Update the elapsed time in the game to keep track of the game + movement
@@ -788,14 +792,14 @@ public class MazeGame extends VariableFrameRateGame {
 	 * Checks that the player's food level is not below a certain amount
 	 * @return
 	 */
-	private boolean playerIsHungry() { return foodLevel <= foodLevelHungerThreshold; }
+	// private boolean playerIsHungry() { return foodLevel <= foodLevelHungerThreshold; }
 
 	/**
 	 * This function will contain the tests that the function must pass in order to allow the collection of
 	 * a prize during a collision.
 	 * @return
 	 */
-	private boolean preventPrizeCollection(){ return  playerIsHungry(); }
+	// private boolean preventPrizeCollection(){ return  playerIsHungry(); }
 
 	// Check if the player has collected a certain amount of prizes
 	private void checkGameOver() {
@@ -835,6 +839,7 @@ public class MazeGame extends VariableFrameRateGame {
 	public ObjShape getGhostShape() {
 		return networkClient.getGhostShape();
 	}
+
 	
 	public TextureImage getGhostTexture() {
 		return networkClient.getGhostTexture();
@@ -842,6 +847,10 @@ public class MazeGame extends VariableFrameRateGame {
 
 	public GhostManager getGhostManager() {
 		return networkClient.getGhostManager();
+	}
+
+	public ObjShape getNPCshape() {
+		return networkClient.getNPCshape();
 	}
 
 	public Engine getEngine() { return engine; }
@@ -855,6 +864,9 @@ public class MazeGame extends VariableFrameRateGame {
 	public Vector3f getPlayerPosition() { return plyr.getWorldLocation(); }
 
 	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
+
+	// public ObjectShape getNPCshape() {}
+	// public void TexturegetNPCtexture() {}
 	
 	@Override
 	public void keyPressed(KeyEvent e){

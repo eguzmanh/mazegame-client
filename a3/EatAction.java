@@ -29,6 +29,6 @@ public class EatAction extends AbstractInputAction {
         // return if deadzone
         // if (evt.getValue() > -.2f && evt.getValue() < .2f) return;
         if(game.isSuspended()) return;
-        game.eatAction();
+        // game.eatAction();
     }
 }

@@ -15,6 +15,7 @@ public class ProtocolClient extends GameConnectionClient
 {
 	private MazeGame game;
 	private GhostManager ghostManager;
+	// private GhostNPC ghostNPC;
 	private UUID id;
 	
 	public ProtocolClient(InetAddress remoteAddr, int remotePort, ProtocolType protocolType, MazeGame game) throws IOException 
@@ -24,6 +25,36 @@ public class ProtocolClient extends GameConnectionClient
 		ghostManager = game.getGhostManager();
 	}
 	
+	// ------------- GHOST NPC SECTION --------------
+	// private void createGhostNPC(UUID id, Vector3f position) throws IOException
+	// { 
+	// 	if (ghostNPC == null)
+	// 		ghostNPC = new GhostNPC(id, game.getNPCshape(), position);
+	// }
+	// private void createGhostNPC(Vector3f position) throws IOException
+	// { 
+	// 	if (ghostNPC == null)
+	// 		ghostNPC = new GhostNPC(0, game.getNPCshape(), position);
+	// }
+
+	// private void updateGhostNPC(Vector3f position, double gsize) {
+	// 	boolean gs;
+	// 	// if (ghostNPC == null) return 
+	// 	// 	System.out.println("This should only run once!!");
+	// 	// 	try { 
+	// 	// 		createGhostNPC(position);
+	// 	// 	} catch (IOException e) { 
+	// 	// 		System.out.println("error creating npc"); 
+	// 	// 	}
+	// 	// }
+	// 	// System.out.println("GhostNPC: "+ ghostNPC);
+
+	// 	// ghostNPC.setPosition(position);
+	// 	// if (gsize == 1.0) gs=false; else gs=true;
+	// 	// ghostNPC.setSize(gs);
+	// 	// System.out.println("We are making it out!!!:");
+	// }
+
 	public UUID getID() { return id; }
 	
 	@Override
@@ -42,6 +73,7 @@ public class ProtocolClient extends GameConnectionClient
 				{	System.out.println("join success confirmed");
 					game.setIsConnected(true);
 					sendCreateMessage(game.getPlayerPosition());
+					sendNeedNPCMessage();
 				}
 				if(messageTokens[1].compareTo("failure") == 0)
 				{	System.out.println("join failure confirmed");
@@ -105,7 +137,43 @@ public class ProtocolClient extends GameConnectionClient
 					Float.parseFloat(messageTokens[4]));
 				
 				ghostManager.updateGhostAvatar(ghostID, ghostPosition);
-	}	}	}
+			}
+
+			if (messageTokens[0].compareTo("createNPC") == 0) { 
+					Vector3f ghostPosition = new Vector3f(
+					Float.parseFloat(messageTokens[1]),
+					Float.parseFloat(messageTokens[2]),
+					Float.parseFloat(messageTokens[3]));
+					try { 
+						ghostManager.createGhostNPC(ghostPosition);
+					} catch (IOException e) { 
+						System.out.println("error creating ghost NPC");
+					}
+				// }
+			} 	
+			
+			if (messageTokens[0].compareTo("updateNPC") == 0) { 
+				// create a new ghost NPC
+				// Parse out the position
+				Vector3f ghostPosition = new Vector3f(
+				Float.parseFloat(messageTokens[1]),
+				Float.parseFloat(messageTokens[2]),
+				Float.parseFloat(messageTokens[3]));
+
+				ghostManager.updateGhostNPC(ghostPosition, 1.0);
+			}
+			if (messageTokens[0].compareTo("isnr") == 0) { 
+				// create a new ghost NPC
+				// Parse out the position
+				Vector3f ghostPosition = new Vector3f(
+				Float.parseFloat(messageTokens[1]),
+				Float.parseFloat(messageTokens[2]),
+				Float.parseFloat(messageTokens[3]));
+
+				System.out.println("Checking if the object is near.");
+				// ghostManager.updateGhostNPC(ghostPosition, 1.0);
+			} 	
+}	}
 	
 	// The initial message from the game client requesting to join the 
 	// server. localId is a unique identifier for the client. Recommend 
@@ -142,6 +210,14 @@ public class ProtocolClient extends GameConnectionClient
 			message += "," + position.z();
 			
 			sendPacket(message);
+		} catch (IOException e) 
+		{	e.printStackTrace();
+	}	}
+
+
+	public void sendNeedNPCMessage()
+	{	try 
+		{	sendPacket(new String("needNPC," + id.toString()));
 		} catch (IOException e) 
 		{	e.printStackTrace();
 	}	}

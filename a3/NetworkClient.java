@@ -24,7 +24,12 @@ public class NetworkClient {
 
     private ObjShape ghostS;
     private TextureImage ghostTx;
+	
+	
+	private ObjShape npcS;
+    private TextureImage npcTx;
 
+	
     public NetworkClient(MazeGame game, String serverAddress, int serverPort, String protocol) {
         this.game = game;
         gm = new GhostManager(game);
@@ -41,11 +46,13 @@ public class NetworkClient {
     public GhostManager getGhostManager() { return gm; }
 
     public ObjShape getGhostShape() { return ghostS; }
-	
 	public TextureImage getGhostTexture() { return ghostTx; }
+	public ObjShape getNPCshape() { return npcS; }
+	public TextureImage getNPCtexture() { return npcTx; }
 
+	public void setNPCshape(ObjShape shape) { npcS = shape; }
+	// public void setNPCtexture(TextureImage texture) { ghostTx = texture; }
     public void setGhostShape(ObjShape ghostShape) { ghostS = ghostShape; }
-	
 	public void setGhostTexture(TextureImage ghostTexture) { ghostTx = ghostTexture; }
 
     public void setupNetworking() {

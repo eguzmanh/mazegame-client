@@ -15,6 +15,8 @@ public class GhostManager
 	private MazeGame game;
 	private Vector<GhostAvatar> ghostAvatars = new Vector<GhostAvatar>();
 
+	private GhostNPC ghostNPC;
+
 	public GhostManager(VariableFrameRateGame vfrg)
 	{	game = (MazeGame)vfrg;
 	}
@@ -62,4 +64,29 @@ public class GhostManager
 		{	System.out.println("tried to update ghost avatar position, but unable to find ghost in list");
 		}
 	}
+
+
+	public void createGhostNPC(Vector3f position) throws IOException
+	{ 
+		if (ghostNPC == null)
+			ghostNPC = new GhostNPC(0, game.getNPCshape(), position);
+	}
+
+	public void updateGhostNPC(Vector3f position, double gsize) {
+		boolean gs;
+		if (ghostNPC == null) { 
+			System.out.println("Creating an NPC for the first time");
+			try { 
+				createGhostNPC(position);
+			} catch (IOException e) { 
+				System.out.println("error creating npc"); 
+			}
+		}
+		
+		ghostNPC.setPosition(position);
+		if (gsize == 1.0) gs=false; else gs=true;
+		ghostNPC.setSize(gs);
+	}
+
+
 }
