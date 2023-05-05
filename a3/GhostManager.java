@@ -69,7 +69,7 @@ public class GhostManager
 	public void createGhostNPC(Vector3f position) throws IOException
 	{ 
 		if (ghostNPC == null)
-			ghostNPC = new GhostNPC(0, game.getNPCshape(), position);
+			ghostNPC = new GhostNPC(0, game.getNPCshape(), game.getNPCtexture(), position);
 	}
 
 	public void updateGhostNPC(Vector3f position, double gsize) {
