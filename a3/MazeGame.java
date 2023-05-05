@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import javax.swing.*;
+import java.nio.FloatBuffer;
 
 
 // Scripting portion
@@ -37,6 +38,15 @@ import net.java.games.input.Event;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.List;
+
+//physics
+import tage.physics.PhysicsEngine;
+import tage.physics.PhysicsObject;
+import tage.physics.PhysicsEngineFactory;
+import tage.physics.JBullet.*;
+import com.bulletphysics.dynamics.RigidBody;
+import com.bulletphysics.collision.dispatch.CollisionObject;
 
 public class MazeGame extends VariableFrameRateGame {
 	private static Engine engine;
@@ -93,8 +103,16 @@ public class MazeGame extends VariableFrameRateGame {
 	//audio stuff
 	private IAudioManager audioMgr;
 	private Sound rainSound, walkSound;
-	private Vector3f rainDirection = new Vector3f(10, 0, 13);
+	private Vector3f rainDirection = new Vector3f(3, 0, 1);
 	private boolean isWalking;
+
+	//physics stuff
+	private PhysicsEngine physEng;
+	private PhysicsObject plyrP, mazeP, planeP;
+	private boolean running = false;
+	private boolean isJumping = false;
+	private int direction;
+	private float vals[] = new float[16];
 	
 
 	public MazeGame(String serverAddress, int serverPort, String protocol) { 
@@ -212,6 +230,7 @@ public class MazeGame extends VariableFrameRateGame {
 		initEngineComponents();
 		initAudio();
 		initMainInputManagerActions();  // handle the Input Manager detection
+		initPhysicsWorld();
 		foodTorusAzimuth = 0.0f;
 		foodTorusElevation = 0.0f;
 		foodTorusRadius = 4.0f;
@@ -252,8 +271,11 @@ public class MazeGame extends VariableFrameRateGame {
 
 		//update sound
 		walkSound.setLocation(plyr.getWorldLocation());
-		rainSound.setEmitDirection(rainDirection, 180f);
+		rainSound.setEmitDirection(rainDirection, 360f);
 		setEarParamenters();
+
+		//update physics
+		updatePhysics(running);
 	}
 	
 	/******************************************************
@@ -444,7 +466,7 @@ public class MazeGame extends VariableFrameRateGame {
 		resource2 = audioMgr.createAudioResource("assets/audio/heavy-rain-on-wooden-doors-55063.wav", AudioResourceType.AUDIO_SAMPLE);
 
 		walkSound = new Sound(resource1, SoundType.SOUND_EFFECT, 100, true);
-		rainSound = new Sound(resource2, SoundType.SOUND_EFFECT, 25, true);
+		rainSound = new Sound(resource2, SoundType.SOUND_EFFECT, 15, true);
 
 		walkSound.initialize(audioMgr);
 		rainSound.initialize(audioMgr);
@@ -531,6 +553,7 @@ public class MazeGame extends VariableFrameRateGame {
 		TurnAction turnActionCmd = new TurnAction(this); 
 		// PitchAction pitchActionCmd = new PitchAction(this); 
 		EatAction eatActionCmd = new EatAction(this);
+		JumpAction jumpAction = new JumpAction(this);
 
 		shutdownActionCmd.associateDeviceInputs();
 		screenModeToggleActionCmd.associateDeviceInputs();
@@ -542,16 +565,136 @@ public class MazeGame extends VariableFrameRateGame {
 		turnActionCmd.associateDeviceInputs();
 		// pitchActionCmd.associateDeviceInputs();
 		eatActionCmd.associateDeviceInputs();
+		jumpAction.associateDeviceInputs();
 	}
 
+	private void initPhysicsWorld(){
+		//initialize physics system
+		String engine = "tage.physics.JBullet.JBulletPhysicsEngine";
+		float[] gravity = {0f, -5f, 0f};
+		physEng = PhysicsEngineFactory.createPhysicsEngine(engine);
+		physEng.initSystem();
+		physEng.setGravity(gravity);
+
+		//create physics world
+		float mass = 1.0f;
+		float up[] = {0,1,0};
+		double[] tempTransform;
+
+		//player physics object
+		Matrix4f translation = new Matrix4f(plyr.getLocalTranslation());
+		tempTransform = toDoubleArray(translation.get(vals));
+		plyrP = physEng.addSphereObject(physEng.nextUID(), mass, tempTransform, 0.75f);
+		plyrP.setBounciness(0.0f);
+		plyrP.setFriction(1.0f);
+		plyrP.setDamping(0.9f, 0.9f);
+		plyr.setPhysicsObject(plyrP);
+
+		//maze floor
+		translation = new Matrix4f(maze.getLocalTranslation());
+		tempTransform = toDoubleArray(translation.get(vals));
+		mazeP = physEng.addStaticPlaneObject(physEng.nextUID(), tempTransform, up, 0.0f);
+		mazeP.setBounciness(0.0f);
+		mazeP.setFriction(0.5f);
+		mazeP.setDamping(0.9f, 0.9f);
+		maze.setPhysicsObject(mazeP);
+	}
+
+	private void updatePhysics(boolean running){
+		if(running){
+			//System.out.println("Physics On");
+			Matrix4f mat = new Matrix4f();
+			Matrix4f mat2 = new Matrix4f().identity();
+			checkForCollisions();
+
+			isJumpingAndMoving();
+
+			physEng.update((float)elapsTime);
+			for(GameObject go:engine.getSceneGraph().getGameObjects()){
+				if(go.getPhysicsObject() != null){
+					mat.set(toFloatArray(go.getPhysicsObject().getTransform()));
+					mat2.set(3,0, mat.m30());
+					mat2.set(3,1, mat.m31());
+					mat2.set(3,2, mat.m32());
+					go.setLocalTranslation(mat2);
+				}
+			}
+		}
+	}
+
+	public void isJumpingAndMoving(){
+		Vector3f fwdDirection = plyr.getWorldForwardVector();
+		float force = 50f;
 	
+		if (isJumping && plyrP.getLinearVelocity()[1] < 0.1) {
+			System.out.println(isJumping);
+			plyrP.applyForce(0,200,0,0,0,0);
+			isJumping = false; // reset jump flag
+		}
+	
+		if(direction == 1){
+			plyrP.applyForce(fwdDirection.x*force, 0, fwdDirection.z*force, 0, 0, 0);
+		} else if (direction == 2) {
+			plyrP.applyForce(-fwdDirection.x*force, 0, -fwdDirection.z*force, 0, 0, 0);
+		} else {
+			//do nothing
+		}
+	}
+
+	private void checkForCollisions(){
+		com.bulletphysics.dynamics.DynamicsWorld dynamicsWorld;
+		com.bulletphysics.collision.broadphase.Dispatcher dispatcher;
+		com.bulletphysics.collision.narrowphase.PersistentManifold manifold;
+		com.bulletphysics.dynamics.RigidBody object1, object2;
+		com.bulletphysics.collision.narrowphase.ManifoldPoint contactPoint;
+
+		dynamicsWorld = ((JBulletPhysicsEngine)physEng).getDynamicsWorld();
+		dispatcher = dynamicsWorld.getDispatcher();
+		int manifoldCount = dispatcher.getNumManifolds();
+		for (int i=0; i<manifoldCount; i++){
+			manifold = dispatcher.getManifoldByIndexInternal(i);
+			object1 = (com.bulletphysics.dynamics.RigidBody)manifold.getBody0();
+			object2 = (com.bulletphysics.dynamics.RigidBody)manifold.getBody1();
+			JBulletPhysicsObject obj1 = JBulletPhysicsObject.getJBulletPhysicsObject(object1);
+			JBulletPhysicsObject obj2 = JBulletPhysicsObject.getJBulletPhysicsObject(object2);
+			for(int j=0; j<manifold.getNumContacts(); j++){
+				contactPoint = manifold.getContactPoint(j);
+				if(contactPoint.getDistance() <0.0f){
+					System.out.println("Hit between "+obj1+"and "+obj2);
+					break;
+				}
+			}
+		}
+	}
+	
+	private float[] toFloatArray(double[] arr){
+		if(arr == null){return null;}
+		int n = arr.length;
+		float[] ret = new float[n];
+		for(int i=0; i<n; i++){
+			ret[i] = (float)arr[i];
+		}
+		return ret;
+	}
+
+	private double[] toDoubleArray(float[] arr){
+		if(arr == null){return null;}
+		int n = arr.length;
+		double[] ret = new double[n];
+		for(int i=0; i<n; i++){
+			ret[i] = (double)arr[i];
+		}
+		return ret;
+	}
 	/***************************************************************************
 	 * Action functions for working linking InputManager with  hw devices
 	****************************************************************************/
 	/** 
 	 * These public methods will allow the Actions to be called to be called while encapsulating the implementation
 	 */
-	public void animationToggle(boolean isAnimated) { _animationToggle(isAnimated); }
+	public void animationFWDToggle(boolean isAnimated) { _animationFWDToggle(isAnimated); }
+
+	public void animationBWDToggle(boolean isAnimated) { _animationBWDToggle(isAnimated); }
 
 	public void walkSound(boolean isWalking) { _walkSound(isWalking); }
 
@@ -573,6 +716,8 @@ public class MazeGame extends VariableFrameRateGame {
 	
 	public void eatAction() { _eatAction(); }
 
+	public void jumpAction() { _jumpAction(); }
+
 	private void _walkSound(boolean isWalking){
 		if(isWalking){
 			walkSound.play();
@@ -581,10 +726,19 @@ public class MazeGame extends VariableFrameRateGame {
 		}
 	}
 
-	private void _animationToggle(boolean isAnimated) {
+	private void _animationFWDToggle(boolean isAnimated) {
 		if(isAnimated){
 			plyrS.stopAnimation();
-			plyrS.playAnimation("WALK", 0.2f, AnimatedShape.EndType.LOOP, 0);
+			plyrS.playAnimation("WALK", 0.3f, AnimatedShape.EndType.LOOP, 0);
+		} else {
+			plyrS.stopAnimation();
+		}
+	}
+
+	private void _animationBWDToggle(boolean isAnimated) {
+		if(isAnimated){
+			plyrS.stopAnimation();
+			plyrS.playAnimation("WALK", -0.3f, AnimatedShape.EndType.LOOP, 0);
 		} else {
 			plyrS.stopAnimation();
 		}
@@ -655,6 +809,10 @@ public class MazeGame extends VariableFrameRateGame {
 			foodStorageBuf = 0.0f;
 			foodStorageEmpty = true;
 		}
+	}
+	
+	private void _jumpAction() {
+		isJumping = true;
 	}
 	/******************************************************
 	 * 		* Helper functions for the update steps
@@ -860,8 +1018,23 @@ public class MazeGame extends VariableFrameRateGame {
 	public void keyPressed(KeyEvent e){
 		switch (e.getKeyCode()){
 			case KeyEvent.VK_W:{
-				animationToggle(true);
+				animationFWDToggle(true);
 				walkSound(true);
+				direction = 1;
+				break;
+			}
+			case KeyEvent.VK_S:{
+				animationBWDToggle(true);
+				walkSound(true);
+				direction = 2;
+				break;
+			}
+			case KeyEvent.VK_K:{
+				running = true;
+				break;
+			}
+			case KeyEvent.VK_L:{
+				running = false;
 				break;
 			}
 		}
@@ -870,10 +1043,18 @@ public class MazeGame extends VariableFrameRateGame {
 	@Override
 	public void keyReleased(KeyEvent e) {
 		switch (e.getKeyCode()) {
-			case KeyEvent.VK_W:
-				animationToggle(false);
+			case KeyEvent.VK_W:{
+				animationFWDToggle(false);
 				walkSound(false);
+				direction = 0;
 				break;
+			}
+			case KeyEvent.VK_S:{
+				animationBWDToggle(false);
+				walkSound(false);
+				direction = 0;
+				break;
+			}
 		}
 	}
 }
