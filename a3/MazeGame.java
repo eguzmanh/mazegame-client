@@ -1,6 +1,7 @@
 package a3;
 
 import tage.*;
+import tage.Light.LightType;
 import tage.audio.AudioManagerFactory;
 import tage.audio.AudioResource;
 import tage.audio.AudioResourceType;
@@ -63,7 +64,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean isMounted, paused, isInPlayerBounds, gameOver;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject plyr, x, y, z, groundPlane, foodTorus, maze;
+	private GameObject plyr, x, y, z, groundPlane, foodTorus;
 	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS;
 	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npcTx;
 	private int spaceBox;
@@ -71,6 +72,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private AnimatedShape plyrS;
 
 	private Light light1;
+	private Light light2;
 
 	private CameraOrbit3D orbit3DController;
 	
@@ -92,6 +94,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean foodStorageEmpty;
 
 	private GhostManager gm;
+	private GhostNPC ghost;
 	private String serverAddress;
 	private int serverPort;
 	private ProtocolType serverProtocol;
@@ -102,8 +105,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	//audio stuff
 	private IAudioManager audioMgr;
-	private Sound rainSound, walkSound;
-	private Vector3f rainDirection = new Vector3f(3, 0, 1);
+	private Sound rainSound, walkSound, ghostSound, backgroundMusic;
 	private boolean isWalking;
 
 	//physics stuff
@@ -172,7 +174,7 @@ public class MazeGame extends VariableFrameRateGame {
 		plyrtx = new TextureImage("Basic Guy UV.jpg");
 		// fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
-		terrTx = new TextureImage("heightMap_v2.jpg");
+		terrTx = new TextureImage("MazeHeightMap.jpg");
 		// customTextures.add(new TextureImage("Wood_Desk.png"));
 		// customTextures.add(new TextureImage("Floral_Sheet.png"));
 		mazeTx = new TextureImage("rustic_stone_wall_diff_4k.jpg");
@@ -200,11 +202,18 @@ public class MazeGame extends VariableFrameRateGame {
 
 	@Override
 	public void initializeLights() {	
-		Light.setGlobalAmbient(0.5f, 0.5f, 0.5f);
+		Light.setGlobalAmbient(0.2f, 0.2f, 0.2f);
 		light1 = new Light();
+		light1.setType(LightType.POSITIONAL);
 		// System.out.println("Light type: " + light1.getLightType());
 		light1.setLocation(new Vector3f(5.0f, 4.0f, 2.0f));
 		(engine.getSceneGraph()).addLight(light1);
+
+		light2 = new Light();
+		light2.setType(LightType.SPOTLIGHT);
+		light2.setLocation(plyr.getWorldLocation());
+		light2.setDirection(plyr.getLocalForwardVector());
+		(engine.getSceneGraph()).addLight(light2);
 	}
 
 	@Override
@@ -240,8 +249,17 @@ public class MazeGame extends VariableFrameRateGame {
 		checkGameOver();
 		
 		Vector3f loc = plyr.getWorldLocation();
-		float height = maze.getHeight(loc.x(), loc.z());
+		float height = groundPlane.getHeight(loc.x(), loc.z());
+
 		plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
+
+		/*if (height > 5) {
+			// Player height exceeds y=5, so stop their movement
+			plyr.setLocalLocation(new Vector3f(loc.x(), 5, loc.z()));
+		} else {
+			// Player is at a valid height, so update their position as usual
+			plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
+		}*/
 		
 		scriptFactory.update("js");
 		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
@@ -266,7 +284,8 @@ public class MazeGame extends VariableFrameRateGame {
 		
 		//update sound
 		walkSound.setLocation(plyr.getWorldLocation());
-		rainSound.setEmitDirection(rainDirection, 360f);
+		//ghostSound.setEmitDirection(ghost.getWorldLocation(), 360f);
+		backgroundMusic.setEmitDirection(new Vector3f(0,0,0), 360f);
 		setEarParamenters();
 
 		//update physics
@@ -353,14 +372,14 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	private void buildMaze() {
-		Matrix4f initialTranslation, initialScale;
+		// Matrix4f initialTranslation, initialScale;
 
-		maze = new GameObject(GameObject.root(), mazeS, mazeTx);
-		initialTranslation = (new Matrix4f()).translation(0f, -1f, 0f);
-		initialScale = (new Matrix4f()).scaling(50.0f);
+		// maze = new GameObject(GameObject.root(), mazeS, mazeTx);
+		// initialTranslation = (new Matrix4f()).translation(0f, -1f, 0f);
+		// initialScale = (new Matrix4f()).scaling(50.0f);
 
-		maze.setLocalTranslation(initialTranslation);
-		maze.setLocalScale(initialScale);
+		// maze.setLocalTranslation(initialTranslation);
+		// maze.setLocalScale(initialScale);
 	}
 
 	/**
@@ -456,7 +475,7 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	public void initAudio(){
-		AudioResource resource1, resource2;
+		AudioResource resource1, resource2, resource3;
 		audioMgr = AudioManagerFactory.createAudioManager("tage.audio.joal.JOALAudioManager");
 
 		if(!audioMgr.initialize()){
@@ -465,25 +484,35 @@ public class MazeGame extends VariableFrameRateGame {
 		}
 
 		resource1 = audioMgr.createAudioResource("assets/audio/indoor-footsteps-6385.wav", AudioResourceType.AUDIO_SAMPLE);
-		resource2 = audioMgr.createAudioResource("assets/audio/heavy-rain-on-wooden-doors-55063.wav", AudioResourceType.AUDIO_SAMPLE);
+		resource2 = audioMgr.createAudioResource("assets/audio/classic-ghost-sound-95773.wav", AudioResourceType.AUDIO_SAMPLE);
+		resource3 = audioMgr.createAudioResource("assets/audio/spookyMusic.wav", AudioResourceType.AUDIO_STREAM);
 
 		walkSound = new Sound(resource1, SoundType.SOUND_EFFECT, 100, true);
-		rainSound = new Sound(resource2, SoundType.SOUND_EFFECT, 15, true);
+		//rainSound = new Sound(resource2, SoundType.SOUND_EFFECT, 15, true);
+		ghostSound = new Sound(resource2, SoundType.SOUND_EFFECT, 100, true);
+		backgroundMusic = new Sound(resource3, SoundType.SOUND_MUSIC, 15, true);
 
 		walkSound.initialize(audioMgr);
-		rainSound.initialize(audioMgr);
+		ghostSound.initialize(audioMgr);
+		backgroundMusic.initialize(audioMgr);
 		walkSound.setMaxDistance(1.0f);
 		walkSound.setMinDistance(0.0f);
 		walkSound.setRollOff(5.0f);
-		rainSound.setMaxDistance(10.0f);
-		rainSound.setMinDistance(0.5f);
-		rainSound.setRollOff(5.0f);
+		ghostSound.setMaxDistance(10.0f);
+		ghostSound.setMinDistance(0.5f);
+		ghostSound.setRollOff(5.0f);
+		backgroundMusic.setMaxDistance(500.0f);
+		backgroundMusic.setMinDistance(0.0f);
+		backgroundMusic.setRollOff(5.0f);
 
 		walkSound.setLocation(plyr.getWorldLocation());
-		rainSound.setLocation(new Vector3f(10,0,13));
+		//ghostSound.setLocation(ghost.getWorldLocation());
+		backgroundMusic.setLocation(new Vector3f(0,0,0));
+
 		setEarParamenters();
 
-		rainSound.play();
+		backgroundMusic.play();
+		//ghostSound.play();
 	}
 
 	public void setEarParamenters(){
@@ -588,20 +617,21 @@ public class MazeGame extends VariableFrameRateGame {
 		//player physics object
 		Matrix4f translation = new Matrix4f(plyr.getLocalTranslation());
 		tempTransform = toDoubleArray(translation.get(vals));
-		plyrP = physEng.addSphereObject(physEng.nextUID(), mass, tempTransform, 0.75f);
+		plyrP = physEng.addCapsuleObject(physEng.nextUID(), mass, tempTransform, 0.75f, 2.0f);
 		plyrP.setBounciness(0.0f);
 		plyrP.setFriction(1.0f);
 		plyrP.setDamping(0.9f, 0.9f);
 		plyr.setPhysicsObject(plyrP);
 
 		//maze floor
-		translation = new Matrix4f(maze.getLocalTranslation());
+		translation = new Matrix4f(groundPlane.getLocalTranslation());
 		tempTransform = toDoubleArray(translation.get(vals));
-		mazeP = physEng.addStaticPlaneObject(physEng.nextUID(), tempTransform, up, 0.0f);
+		mazeP = physEng.addStaticPlaneObject(direction, tempTransform, up, 1.5f);
 		mazeP.setBounciness(0.0f);
 		mazeP.setFriction(0.5f);
 		mazeP.setDamping(0.9f, 0.9f);
-		maze.setPhysicsObject(mazeP);
+		groundPlane.setPhysicsObject(mazeP);
+		
 	}
 
 	private void updatePhysics(boolean running){
@@ -632,7 +662,7 @@ public class MazeGame extends VariableFrameRateGame {
 	
 		if (isJumping && plyrP.getLinearVelocity()[1] < 0.1) {
 			System.out.println(isJumping);
-			plyrP.applyForce(0,200,0,0,0,0);
+			plyrP.applyForce(0,400,0,0,0,0);
 			isJumping = false; // reset jump flag
 		}
 	
