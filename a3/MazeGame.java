@@ -333,7 +333,7 @@ public class MazeGame extends VariableFrameRateGame {
 		plyr = new GameObject(GameObject.root(), plyrS, plyrtx);
 		networkClient.setGhostShape(plyrS);
 		networkClient.setGhostTexture(plyrtx);
-		initialTranslation = (new Matrix4f()).translation(-1f,minGameObjectYLoc,1f); 
+		initialTranslation = (new Matrix4f()).translation(34.30f,minGameObjectYLoc,-486.6f); 
 		initialScale = (new Matrix4f()).scaling(0.5f);
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(135.0f)); 
 		
