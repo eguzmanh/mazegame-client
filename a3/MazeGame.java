@@ -617,7 +617,7 @@ public class MazeGame extends VariableFrameRateGame {
 		//player physics object
 		Matrix4f translation = new Matrix4f(plyr.getLocalTranslation());
 		tempTransform = toDoubleArray(translation.get(vals));
-		plyrP = physEng.addCapsuleObject(physEng.nextUID(), mass, tempTransform, 0.75f, 2.0f);
+		plyrP = physEng.addCapsuleObject(physEng.nextUID(), mass, tempTransform, plyr.getLocalUpVector().x(), plyr.getLocalUpVector().y());
 		plyrP.setBounciness(0.0f);
 		plyrP.setFriction(1.0f);
 		plyrP.setDamping(0.9f, 0.9f);
@@ -1031,25 +1031,27 @@ public class MazeGame extends VariableFrameRateGame {
 	public boolean isSuspended() {return isPaused() || isGameOver(); }
 
 	// ************************ Network methods *********************************
-	public ObjShape getGhostShape() {
-		return networkClient.getGhostShape();
-	}
+	public GameObject getAvatar(){ return plyr; }
+
+	public ObjShape getGhostShape() { return networkClient.getGhostShape(); }
 	
-	public TextureImage getGhostTexture() {
-		return networkClient.getGhostTexture();
+	public TextureImage getGhostTexture() {	return networkClient.getGhostTexture();	}
+
+	public GhostManager getGhostManager() {	return networkClient.getGhostManager();	}
+
+	public ObjShape getNPCshape() { return networkClient.getNPCshape();	}
+
+	public TextureImage getNPCtexture() { return networkClient.getNPCtexture(); }
+
+	public Vector3f getGhostDefaultPosition()
+	{
+		Vector3f ghostPos = new Vector3f((float)((double)jsEngine.get("ghostPosX")), (float)((double)jsEngine.get("ghostPosY")), 
+		(float)((double)jsEngine.get("ghostPosZ")));
+
+		return ghostPos;
 	}
 
-	public GhostManager getGhostManager() {
-		return networkClient.getGhostManager();
-	}
-
-	public ObjShape getNPCshape() {
-		return networkClient.getNPCshape();
-	}
-
-	public TextureImage getNPCtexture() {
-		return networkClient.getNPCtexture();
-	}
+	public PhysicsEngine getPhysicsEngine(){ return physEng; }
 
 	public Engine getEngine() { return engine; }
 	
@@ -1062,6 +1064,12 @@ public class MazeGame extends VariableFrameRateGame {
 	public Vector3f getPlayerPosition() { return plyr.getWorldLocation(); }
 
 	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
+
+	public boolean avatarCollision(GameObject go)
+	{
+		return Math.abs(plyr.getLocalLocation().distance(go.getWorldLocation().x(), go.getWorldLocation().y(), 
+		go.getWorldLocation().z())) < 1.25;
+	}
 
 	@Override
 	public void keyPressed(KeyEvent e){
