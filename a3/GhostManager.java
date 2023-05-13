@@ -43,8 +43,6 @@ public class GhostManager
 		}
 	}
 
-	public Vector<GhostAvatar> getAllGhost(){ return ghostAvatars; }
-
 	private GhostAvatar findAvatar(UUID id)
 	{	GhostAvatar ghostAvatar;
 		Iterator<GhostAvatar> it = ghostAvatars.iterator();
@@ -67,40 +65,28 @@ public class GhostManager
 		}
 	}
 
-	public void updateGhostAvatarRotation(UUID id, Matrix4f rotation)
-	{
-		GhostAvatar ghostAvatar = findAvatar(id);
-		if (ghostAvatar != null)
-		{	
-			ghostAvatar.setLocalRotation(rotation);
-		}
-		else
-		{	
-			System.out.println("tried to update ghost avatar position, but unable to find ghost in list");
-		}
+
+	public void createGhostNPC(Vector3f position) throws IOException
+	{ 
+		if (ghostNPC == null)
+			ghostNPC = new GhostNPC(0, game.getNPCshape(), game.getNPCtexture(), position);
 	}
 
-	// public void createGhostNPC(Vector3f position) throws IOException
-	// { 
-	// 	if (ghostNPC == null)
-	// 		ghostNPC = new GhostNPC(0, game.getNPCshape(), game.getNPCtexture(), position);
-	// }
-
-	// public void updateGhostNPC(Vector3f position, double gsize) {
-	// 	boolean gs;
-	// 	if (ghostNPC == null) { 
-	// 		System.out.println("Creating an NPC for the first time");
-	// 		try { 
-	// 			createGhostNPC(position);
-	// 		} catch (IOException e) { 
-	// 			System.out.println("error creating npc"); 
-	// 		}
-	// 	}
+	public void updateGhostNPC(Vector3f position, double gsize) {
+		boolean gs;
+		if (ghostNPC == null) { 
+			System.out.println("Creating an NPC for the first time");
+			try { 
+				createGhostNPC(position);
+			} catch (IOException e) { 
+				System.out.println("error creating npc"); 
+			}
+		}
 		
-	// 	ghostNPC.setPosition(position);
-	// 	if (gsize == 1.0) gs=false; else gs=true;
-	// 	ghostNPC.setSize(gs);
-	// }
+		ghostNPC.setPosition(position);
+		if (gsize == 1.0) gs=false; else gs=true;
+		ghostNPC.setSize(gs);
+	}
 
 
 }
