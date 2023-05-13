@@ -227,7 +227,19 @@ public class ProtocolClient extends GameConnectionClient
 
 				// System.out.println("Checking if the object is near.");
 				// ghostManager.updateGhostNPC(ghostPosition, 1.0);
-			} 	
+			}
+			if (messageTokens[0].compareTo("gameWinnerData") == 0) {
+				game.setGameOver();
+				game.setGameWinnerUUIDStr(messageTokens[1]);
+				// create a new ghost NPC
+				// Parse out the position
+				// Vector3f ghostPosition = new Vector3f(
+				// Float.parseFloat(messageTokens[1]),
+				// Float.parseFloat(messageTokens[2]),
+				// Float.parseFloat(messageTokens[3]));
+
+				// updateGhostNPC(ghostPosition, 1.0);
+			}
 }	}
 	
 	// The initial message from the game client requesting to join the 
@@ -268,6 +280,19 @@ public class ProtocolClient extends GameConnectionClient
 		} catch (IOException e) 
 		{	e.printStackTrace();
 	}	}
+
+	public void sendGameWinner(Vector3f position) {
+		try 
+		{	String message = new String("gameWinner," + id.toString());
+			message += "," + position.x();
+			message += "," + position.y();
+			message += "," + position.z();
+			
+			sendPacket(message);
+		} catch (IOException e) 
+		{	e.printStackTrace();
+	}
+	}
 
 
 	public void sendNeedNPCMessage()
