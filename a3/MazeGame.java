@@ -223,6 +223,7 @@ public class MazeGame extends VariableFrameRateGame {
 		light2.setType(LightType.SPOTLIGHT);
 		light2.setLocation(plyr.getWorldLocation());
 		light2.setDirection(plyr.getLocalForwardVector());
+		light2.setCutoffAngle(30.0f);
 		(engine.getSceneGraph()).addLight(light2);
 	}
 
@@ -271,15 +272,9 @@ public class MazeGame extends VariableFrameRateGame {
 		plyrS.updateAnimation();
 
 		if(!lightOff){
-			//System.out.println("Light On");
-			(engine.getSceneGraph()).addLight(light2);
-		} else {
-			(engine.getSceneGraph()).removeLight(light2);
+			light2.setLocation(plyr.getWorldLocation());
+			light2.setDirection(plyr.getLocalForwardVector());
 		}
-
-		light2.setLocation(plyr.getWorldLocation());
-		light2.setDirection(plyr.getLocalForwardVector());
-		
 		
 		// validatePrizeCollisions();
 		// validateFoodStationCollisions();
@@ -1020,6 +1015,12 @@ public class MazeGame extends VariableFrameRateGame {
 			}
 			case KeyEvent.VK_E:{
 				lightOff = !lightOff;
+				if(lightOff == false){
+					//System.out.println("Light On");
+					(engine.getSceneGraph()).addLight(light2);
+				} else if(lightOff == true) {
+					(engine.getSceneGraph()).removeLight(light2);
+				}
 				break;
 			}
 		}
