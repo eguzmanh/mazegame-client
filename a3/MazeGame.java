@@ -80,6 +80,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private Light light1;
 	private Light light2;
+	private boolean lightOff = false;
 
 	private CameraOrbit3D orbit3DController;
 	
@@ -206,7 +207,6 @@ public class MazeGame extends VariableFrameRateGame {
 		// buildFoodStations();	
 		// buildFoodTorus();
 		buildNPCGhost();
-		//buildPhysPlane();
 		// buildMaze();
 	}
 
@@ -216,7 +216,7 @@ public class MazeGame extends VariableFrameRateGame {
 		light1 = new Light();
 		light1.setType(LightType.POSITIONAL);
 		// System.out.println("Light type: " + light1.getLightType());
-		light1.setLocation(new Vector3f(5.0f, 4.0f, 2.0f));
+		light1.setLocation(new Vector3f(0f, 20.0f, 0f));
 		(engine.getSceneGraph()).addLight(light1);
 
 		light2 = new Light();
@@ -259,14 +259,6 @@ public class MazeGame extends VariableFrameRateGame {
 		float height = groundPlane.getHeight(loc.x(), loc.z());
 
 		plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
-
-		/*if (height > 5) {
-			// Player height exceeds y=5, so stop their movement
-			plyr.setLocalLocation(new Vector3f(loc.x(), 5, loc.z()));
-		} else {
-			// Player is at a valid height, so update their position as usual
-			plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
-		}*/
 		
 		scriptFactory.update("js");
 		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
@@ -277,6 +269,12 @@ public class MazeGame extends VariableFrameRateGame {
 		orbit3DController.updateCameraPosition();
 		
 		plyrS.updateAnimation();
+
+		if(!lightOff){
+			//System.out.println("Light On");
+			light2.setLocation(plyr.getWorldLocation());
+			light2.setDirection(plyr.getLocalForwardVector());
+		}
 		
 		// validatePrizeCollisions();
 		// validateFoodStationCollisions();
@@ -376,18 +374,6 @@ public class MazeGame extends VariableFrameRateGame {
 		groundPlane.setHeightMap(terrTx);
 		
 		groundPlane.getRenderStates().setTiling(1);
-	}
-
-	private void buildPhysPlane() {
-		invisPlane = new GameObject(GameObject.root(), invisPlaneS);
-		Matrix4f initialScale = (new Matrix4f()).scaling(500.0f, 10.0f, 500.0f);
-		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, 20f, 0f);
-		Matrix4f initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(180.0f)); 
-
-		
-		invisPlane.setLocalTranslation(initialTranslation);
-		invisPlane.setLocalScale(initialScale);
-		invisPlane.setLocalRotation(initialRotation);
 	}
 
 	// Used to set the random positions for the prizes and food stations
@@ -870,11 +856,11 @@ public class MazeGame extends VariableFrameRateGame {
 	private void buildHUDs() {
 		int elapsTimeSec = Math.round(timer);
 		String elapsTimeStr = Integer.toString(elapsTimeSec);
-		String prizeCounterStr = Integer.toString(prizeCounter);
-		String foodLevelStr = Integer.toString(Math.round(foodLevel));
+		String livesStr = Integer.toString(lives);
+		//String foodLevelStr = Integer.toString(Math.round(foodLevel));
 
-		String dispStr1 = "Prizes Collected = " + prizeCounterStr;
-		String dispStr2 = "Food Level = " + foodLevelStr;
+		String dispStr1 = "Current Lives = " + livesStr;
+		//String dispStr2 = "Food Level = " + foodLevelStr;
 
 		String ds3X = String.format(" {X: %.2f}", plyr.getWorldLocation().x());
 		String ds3Y = String.format(" {Y: %.2f}", plyr.getWorldLocation().y());
@@ -889,10 +875,10 @@ public class MazeGame extends VariableFrameRateGame {
 		// Change the HUD's in case the window size becomes too small
 		if(hudManager.isCanvasTabletMode()) {
 			hudManager.setHUD1(dispStr1, hud1Color, 60, 60);
-			hudManager.setHUD2(dispStr2, hud2Color, 60, 15);
+			//hudManager.setHUD2(dispStr2, hud2Color, 60, 15);
 		} else {
 			hudManager.setHUD1(dispStr1, hud1Color, 15, 15);
-			hudManager.setHUD2(dispStr2, hud2Color, 300, 15);
+			//hudManager.setHUD2(dispStr2, hud2Color, 300, 15);
 		}
 
 		hudManager.setHUD3(dispStr3, hud3Color, (int)engineOHCameraV.getLeftOnCanvas() + 15, 15);
@@ -1025,6 +1011,10 @@ public class MazeGame extends VariableFrameRateGame {
 			}
 			case KeyEvent.VK_L:{
 				running = false;
+				break;
+			}
+			case KeyEvent.VK_E:{
+				lightOff = !lightOff;
 				break;
 			}
 		}
