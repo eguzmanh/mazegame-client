@@ -181,7 +181,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	@Override
 	public void loadTextures() {
-		plyrtx = new TextureImage("Basic Guy UV.jpg");
+		plyrtx = new TextureImage("Basic Guy UV_Purple.jpg");
 		// fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
 		terrTx = new TextureImage("MazeHeightMap.jpg");
@@ -272,9 +272,14 @@ public class MazeGame extends VariableFrameRateGame {
 
 		if(!lightOff){
 			//System.out.println("Light On");
-			light2.setLocation(plyr.getWorldLocation());
-			light2.setDirection(plyr.getLocalForwardVector());
+			(engine.getSceneGraph()).addLight(light2);
+		} else {
+			(engine.getSceneGraph()).removeLight(light2);
 		}
+
+		light2.setLocation(plyr.getWorldLocation());
+		light2.setDirection(plyr.getLocalForwardVector());
+		
 		
 		// validatePrizeCollisions();
 		// validateFoodStationCollisions();

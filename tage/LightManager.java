@@ -45,6 +45,23 @@ public class LightManager
 		light.setIndex(lights.size()-1);
 	}
 
+	protected void removeLight(Light light) {
+		int indexToRemove = light.getIndex();
+		int lastLightIndex = lights.size() - 1;
+	
+		if (indexToRemove < lastLightIndex) {
+			// If the light to remove is not the last light, swap it with the last light
+			// and update its index
+			Light lastLight = lights.get(lastLightIndex);
+			lights.set(indexToRemove, lastLight);
+			lastLight.setIndex(indexToRemove);
+		}
+	
+		// Remove the last light in the list
+		lights.remove(lastLightIndex);
+		light.setIndex(-1);
+	}
+
 	/** returns a reference to the ith Light - not likely to be useful in the game application. */
 	public Light getLight(int i) { return lights.get(i); }
 
