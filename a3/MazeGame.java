@@ -71,8 +71,8 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean isMounted, isInPlayerBounds;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject plyr, x, y, z, groundPlane, foodTorus;
-	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS;
+	private GameObject plyr, x, y, z, groundPlane, foodTorus, invisPlane;
+	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS, invisPlaneS;
 	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npcTx;
 	private int spaceBox;
 	private TerrainPlane terrain;
@@ -167,6 +167,8 @@ public class MazeGame extends VariableFrameRateGame {
 
 		groundPlaneS = new TerrainPlane(1000);
 
+		invisPlaneS = new Plane();
+
 		mazeS = new ImportedModel("maze1.obj");
 
 		// foodTorusS = new Torus(1.0f, 1.0f,48);
@@ -204,6 +206,7 @@ public class MazeGame extends VariableFrameRateGame {
 		// buildFoodStations();	
 		// buildFoodTorus();
 		buildNPCGhost();
+		//buildPhysPlane();
 		// buildMaze();
 	}
 
@@ -339,7 +342,7 @@ public class MazeGame extends VariableFrameRateGame {
 		networkClient.setGhostTexture(plyrtx);
 		initialTranslation = (new Matrix4f()).translation(34.30f,minGameObjectYLoc,-486.6f); 
 		initialScale = (new Matrix4f()).scaling(0.5f);
-		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(135.0f)); 
+		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(90.0f)); 
 		
 		plyr.setLocalTranslation(initialTranslation);
 		plyr.setLocalRotation(initialRotation); 
@@ -375,7 +378,17 @@ public class MazeGame extends VariableFrameRateGame {
 		groundPlane.getRenderStates().setTiling(1);
 	}
 
-	
+	private void buildPhysPlane() {
+		invisPlane = new GameObject(GameObject.root(), invisPlaneS);
+		Matrix4f initialScale = (new Matrix4f()).scaling(500.0f, 10.0f, 500.0f);
+		Matrix4f initialTranslation = (new Matrix4f()).translation(0f, 20f, 0f);
+		Matrix4f initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(180.0f)); 
+
+		
+		invisPlane.setLocalTranslation(initialTranslation);
+		invisPlane.setLocalScale(initialScale);
+		invisPlane.setLocalRotation(initialRotation);
+	}
 
 	// Used to set the random positions for the prizes and food stations
 	private void setObjectTRS(GameObject wgo, float translationYAmnt) {
@@ -568,6 +581,9 @@ public class MazeGame extends VariableFrameRateGame {
 		float up[] = {0,1,0};
 		double[] tempTransform;
 
+
+		
+		
 		//player physics object
 		Matrix4f translation = new Matrix4f(plyr.getLocalTranslation());
 		tempTransform = toDoubleArray(translation.get(vals));
@@ -577,15 +593,24 @@ public class MazeGame extends VariableFrameRateGame {
 		plyrP.setDamping(0.9f, 0.9f);
 		plyr.setPhysicsObject(plyrP);
 
+		//Top Collision
+		// translation = new Matrix4f(invisPlane.getLocalTranslation());
+		// tempTransform = toDoubleArray(translation.get(vals));
+		// planeP = physEng.addStaticPlaneObject(physEng.nextUID(), tempTransform, up, 20f);
+		// planeP.setBounciness(0.0f);
+		// invisPlane.setPhysicsObject(planeP);
+
 		//maze floor
 		translation = new Matrix4f(groundPlane.getLocalTranslation());
 		tempTransform = toDoubleArray(translation.get(vals));
-		mazeP = physEng.addStaticPlaneObject(direction, tempTransform, up, 1.5f);
+		mazeP = physEng.addStaticPlaneObject(physEng.nextUID(), tempTransform, up, 1.5f);
 		mazeP.setBounciness(0.0f);
 		mazeP.setFriction(0.5f);
 		mazeP.setDamping(0.9f, 0.9f);
 		groundPlane.setPhysicsObject(mazeP);
+
 		
+
 	}
 
 	private void updatePhysics(boolean running){
@@ -970,6 +995,12 @@ public class MazeGame extends VariableFrameRateGame {
 	public GameObject getPlayer() { return plyr; }
 
 	public Vector3f getPlayerPosition() { return plyr.getWorldLocation(); }
+
+	public boolean avatarCollision(GameObject go)
+	{
+		return Math.abs(plyr.getLocalLocation().distance(go.getWorldLocation().x(), go.getWorldLocation().y(), 
+		go.getWorldLocation().z())) < 1.25;
+	}
 
 	public void setIsConnected(boolean value) { networkClient.setIsConnected(value); }
 
