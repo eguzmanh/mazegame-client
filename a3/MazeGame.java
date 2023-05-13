@@ -49,6 +49,7 @@ import tage.physics.JBullet.*;
 import com.bulletphysics.dynamics.RigidBody;
 import com.bulletphysics.collision.dispatch.CollisionObject;
 
+
 public class MazeGame extends VariableFrameRateGame {
 	private static Engine engine;
 	private Camera engineCamera, overheadEngineCamera;
@@ -60,8 +61,14 @@ public class MazeGame extends VariableFrameRateGame {
 	private NodeController rc, bc;
 
 	private int prizeCounter, prizeCounterWin, numPrizes, numFoodStations;
+
+	private int lives, maxLives;
+	private boolean paused, gameOver;
+	private String winnerUUID;
+	// private boolean gameOver;
+
 	private float timer, foodLevel, foodLevelHungerThreshold, gameworldEdgeBound, minGameObjectYLoc;
-	private boolean isMounted, paused, isInPlayerBounds, gameOver;
+	private boolean isMounted, isInPlayerBounds;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
 	private GameObject plyr, x, y, z, groundPlane, foodTorus;
@@ -197,7 +204,7 @@ public class MazeGame extends VariableFrameRateGame {
 		// buildFoodStations();	
 		// buildFoodTorus();
 		buildNPCGhost();
-		buildMaze();
+		// buildMaze();
 	}
 
 	@Override
@@ -235,9 +242,6 @@ public class MazeGame extends VariableFrameRateGame {
 		initAudio();
 		initMainInputManagerActions();  // handle the Input Manager detection
 		initPhysicsWorld();
-		// foodTorusAzimuth = 0.0f;
-		// foodTorusElevation = 0.0f;
-		// foodTorusRadius = 4.0f;
 		networkClient.setupNetworking();
 	}
 
@@ -371,57 +375,7 @@ public class MazeGame extends VariableFrameRateGame {
 		groundPlane.getRenderStates().setTiling(1);
 	}
 
-	private void buildMaze() {
-		// Matrix4f initialTranslation, initialScale;
-
-		// maze = new GameObject(GameObject.root(), mazeS, mazeTx);
-		// initialTranslation = (new Matrix4f()).translation(0f, -1f, 0f);
-		// initialScale = (new Matrix4f()).scaling(50.0f);
-
-		// maze.setLocalTranslation(initialTranslation);
-		// maze.setLocalScale(initialScale);
-	}
-
-	/**
-	 * This function uses an int to determine the number of prizes to load in the game
-	 * The prizes will render with a random translation, rotation, and scale 
-	*/
-	// private void buildPrizes() {	
-
-	// 	for(int i = 0; i < numPrizes; i++) {
-	// 		System.out.println("Loading prize: " + i);
-	// 		Prize tempO = new Prize(GameObject.root(), prizeS, getRandomCustomTexture());
-	// 		setObjectTRS(tempO, 3f);
-	// 	}
-	// }
 	
-	/**
-	 * This function uses an int to determine the number of foodstations to load in the game
-	 * The food stations will render with a random translation, rotation, and scale 
-	*/
-	// private void buildFoodStations() {	
-	// 	for(int i = 0; i < numFoodStations; i++) {
-	// 		System.out.println("Loadin food station: " + i);
-	// 		FoodStation fsO = new FoodStation(GameObject.root(), foodStationS, fstx);
-	// 		setObjectTRS(fsO, 3.5f);
-	// 	}
-	// }
-
-	// private void buildFoodTorus() {
-	// 	// Adding Hierarchy
-	// 	Matrix4f initialTranslation, initialScale, initialRotation;
-	// 	foodTorus = new GameObject(GameObject.root(), foodTorusS);
-	// 	// initialTranslation = (new Matrix4f()).translation(-3,0,0);
-	// 	initialScale = (new Matrix4f()).scaling(0.07f);
-	// 	// foodTorus.setLocalTranslation(initialTranslation); 
-	// 	foodTorus.setLocalScale(initialScale);
-	// 	foodTorus.setParent(plyr); 
-	// 	foodTorus.propagateTranslation(false); 
-	// 	foodTorus.propagateRotation(false); 
-	// 	foodTorus.applyParentRotationToPosition(false); 
-	// 	foodTorus.getRenderStates().setTiling(1);
-		
-	// }
 
 	// Used to set the random positions for the prizes and food stations
 	private void setObjectTRS(GameObject wgo, float translationYAmnt) {
@@ -858,69 +812,6 @@ public class MazeGame extends VariableFrameRateGame {
 	/******************************************************
 	 * 		* Helper functions for the update steps
 	******************************************************/
-	
-	// private void rotateTorusIfFoodAvailable() {
-	// 	if(foodStorageEmpty) {
-	// 		if ((foodTorus.getRenderStates()).isEnabled()) { (foodTorus.getRenderStates()).disableRendering(); } 
-	// 		return;
-	// 	}
-
-	// 	if (!(foodTorus.getRenderStates()).isEnabled()) { (foodTorus.getRenderStates()).enableRendering(); }
-
-	// 	float rotAmount = 10f;
-	// 	foodTorusAzimuth += rotAmount; 
-	// 	foodTorusAzimuth = foodTorusAzimuth % 360; 
-
-	// 	double theta = Math.toRadians(foodTorusAzimuth); 
-	// 	double phi = Math.toRadians(foodTorusElevation); 
-
-	// 	float x = foodTorusRadius * (float)(Math.cos(phi) * Math.sin(theta)); 
-	// 	float y = foodTorusRadius * (float)(Math.sin(phi)); 
-	// 	float z = foodTorusRadius * (float)(Math.cos(phi) * Math.cos(theta)); 
-
-	// 	foodTorus.setLocalLocation(new Vector3f(x,y,z).add(plyr.getWorldLocation())); 
-		
-	// }
-	
-	/**
-	 * Ensures that prizes cannot be collected during a collision if certain criteria is not met
-	 * Criteria written in preventPrizeCollection()
-	 * If a successful collision occurs, the prizeCounter is incremented 
-	 * The comparison is done by checking the distance between the camera and the prize object
-	 */
-	// private void validatePrizeCollisions() {
-	// 	if (preventPrizeCollection()) return;
-	// 	Vector3f plyrLoc = plyr.getLocalLocation();
-	// 	for (Prize go : prizes) {
-	// 		if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
-	// 			System.out.println("Collision detected!!");
-	// 			go.disable();
-	// 			rc.addTarget(go);
-	// 			prizeCounter++;
-	// 		}
-	// 	}
-	// }
-
-	/**
-	 * Iterates through the Food Station Array List and will go through collision detection
-	 * A player must be OFF the Player to collect the food source
-	 */
-	// private void validateFoodStationCollisions() {
-	// 	// if (isMounted) return;
-	// 	Vector3f plyrLoc = plyr.getLocalLocation();
-	// 	for (FoodStation go : foodStations) {
-	// 		if (go.isEnabled() && plyrLoc.distance(go.getLocalLocation()) < 4.5f) {
-	// 			System.out.println("Collision detected!!");
-	// 			bc.addTarget(go);
-	// 			rc.addTarget(go);
-
-	// 			go.disable();
-	// 			foodStorageBuf += go.getProportion();
-	// 			if(foodStorageEmpty) foodStorageEmpty = false;
-	// 		}
-	// 	}
-	// }
-
 	/**
 	 * Update the elapsed time in the game to keep track of the game + movement
 	 */
@@ -998,15 +889,34 @@ public class MazeGame extends VariableFrameRateGame {
 
 	// Check if the player has collected a certain amount of prizes
 	private void checkGameOver() {
-		if(prizeCounter == prizeCounterWin) { gameOver = true;}
+		if(avatarCollision(x) && avatarCollision(y) && avatarCollision(z)) { 
+			System.out.println("protclient: " + getProtClient() + "\n\n");
+			getProtClient().sendGameWinner(plyr.getWorldLocation());
+			winnerUUID = getProtClient().getID().toString();
+			gameOver = true;
+		}
+		
 		if(gameOver) { winningShutdown();}  // show winning HUD if player wins
 	}
 
+	public void setGameOver() { gameOver = true;}
+	public void setGameWinnerUUIDStr(String id) {winnerUUID = id; }
+
 	// If the user collects enough prizes, they win (take a look at num)
 	private void winningShutdown() {
-		if(gameOver) {
-			String dispStr = "You are the winner!\nYou collected: " + prizeCounter;
+
+		System.out.println("winner id: " + winnerUUID);
+		System.out.println("your id: " + getProtClient().getID().toString() + "\n\n\n");
+		System.out.println("Did I win??: " + getProtClient().getID().toString().equals(winnerUUID) + "\n\n\n");
+		if(gameOver && getProtClient().getID().toString().equals(winnerUUID)) {
+			String dispStr = "You are the winner!\n";
 			Vector3f hudColor = new Vector3f(0,1,0);
+			hudManager.setHUD4(dispStr, hudColor, 500, 500);
+			shutdown();
+			return;
+		} else if (gameOver) {
+			String dispStr = "You are the loser ...!\n";
+			Vector3f hudColor = new Vector3f(1,0,0);
 			hudManager.setHUD4(dispStr, hudColor, 500, 500);
 			shutdown();
 			return;
