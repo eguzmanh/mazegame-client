@@ -120,6 +120,9 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private String playerColor;
 	
+	private int walkSoundVolume;
+	private int bgMusicVolume;
+	private float walkSoundMaxDistance;
 
 	public MazeGame(String serverAddress, int serverPort, String protocol) { 
 		super();
@@ -272,7 +275,12 @@ public class MazeGame extends VariableFrameRateGame {
 		plyr.setLocalLocation(new Vector3f(loc.x(), height, loc.z()));
 		
 		scriptFactory.update("js");
-		if (scriptFactory.modificationUccurred()) { syncScriptData(); }
+		if (scriptFactory.modificationUccurred()) { 
+			syncScriptData();
+			walkSound.setVolume(walkSoundVolume);
+			backgroundMusic.setVolume(bgMusicVolume);
+			walkSound.setMaxDistance(walkSoundMaxDistance);
+	 }
 		
 		if (suspendGame()) return;
 		
@@ -320,8 +328,8 @@ public class MazeGame extends VariableFrameRateGame {
 		gameOver = false;
 		elapsTime = 0.0f;
 		timer = 0.0f;
-		foodStorageEmpty = true;
-		gameworldEdgeBound = 10000f;
+		// foodStorageEmpty = true;
+		// gameworldEdgeBound = 10000f;
 		minGameObjectYLoc = 1.2f;
 
 		syncScriptData();
@@ -332,14 +340,19 @@ public class MazeGame extends VariableFrameRateGame {
 	private void syncScriptData() {
 		// moving to script engine 
 		playerColor = scriptFactory.getStringFromEngine("js", "playerColor");
+		lives = scriptFactory.getIntFromEngine("js", "lives");
+		gameworldEdgeBound = scriptFactory.getDoubleFVFromEngine("js", "axisLineLength");
+		walkSoundVolume = scriptFactory.getIntFromEngine("js", "walkSoundVolume");
+		bgMusicVolume = scriptFactory.getIntFromEngine("js", "backgroundMusicVolume");
+		walkSoundMaxDistance = scriptFactory.getDoubleFVFromEngine("js", "walkSoundMaxDistance");
 		// setPlayerTexture();
-		numPrizes = scriptFactory.getIntFromEngine("js", "numPrizes");
-		prizeCounter = scriptFactory.getIntFromEngine("js", "prizeCounter");
-		prizeCounterWin =scriptFactory.getIntFromEngine("js", "prizeCounterWin");
-		numFoodStations = scriptFactory.getIntFromEngine("js", "numFoodStations");
-		foodStorageBuf = scriptFactory.getDoubleFVFromEngine("js", "foodStorageBuf");
-		foodLevel = scriptFactory.getDoubleFVFromEngine("js", "foodLevel");
-		foodLevelHungerThreshold =scriptFactory.getDoubleFVFromEngine("js", "foodLevelHungerThreshold");
+		// numPrizes = scriptFactory.getIntFromEngine("js", "numPrizes");
+		// prizeCounter = scriptFactory.getIntFromEngine("js", "prizeCounter");
+		// prizeCounterWin =scriptFactory.getIntFromEngine("js", "prizeCounterWin");
+		// numFoodStations = scriptFactory.getIntFromEngine("js", "numFoodStations");
+		// foodStorageBuf = scriptFactory.getDoubleFVFromEngine("js", "foodStorageBuf");
+		// foodLevel = scriptFactory.getDoubleFVFromEngine("js", "foodLevel");
+		// foodLevelHungerThreshold =scriptFactory.getDoubleFVFromEngine("js", "foodLevelHungerThreshold");
 	}
 
 	private void setPlayerTexture() {
@@ -531,15 +544,16 @@ public class MazeGame extends VariableFrameRateGame {
 		resource2 = audioMgr.createAudioResource("assets/audio/classic-ghost-sound-95773.wav", AudioResourceType.AUDIO_SAMPLE);
 		resource3 = audioMgr.createAudioResource("assets/audio/spookyMusic.wav", AudioResourceType.AUDIO_STREAM);
 
-		walkSound = new Sound(resource1, SoundType.SOUND_EFFECT, 100, true);
+		walkSound = new Sound(resource1, SoundType.SOUND_EFFECT, walkSoundVolume, true);
 		//rainSound = new Sound(resource2, SoundType.SOUND_EFFECT, 15, true);
 		ghostSound = new Sound(resource2, SoundType.SOUND_EFFECT, 100, true);
-		backgroundMusic = new Sound(resource3, SoundType.SOUND_MUSIC, 15, true);
+		backgroundMusic = new Sound(resource3, SoundType.SOUND_MUSIC, bgMusicVolume, true);
+	
 
 		walkSound.initialize(audioMgr);
 		ghostSound.initialize(audioMgr);
 		backgroundMusic.initialize(audioMgr);
-		walkSound.setMaxDistance(1.0f);
+		walkSound.setMaxDistance(walkSoundMaxDistance);
 		walkSound.setMinDistance(0.0f);
 		walkSound.setRollOff(5.0f);
 		ghostSound.setMaxDistance(10.0f);
@@ -627,7 +641,7 @@ public class MazeGame extends VariableFrameRateGame {
 		TurnAction turnActionCmd = new TurnAction(this); 
 		// PitchAction pitchActionCmd = new PitchAction(this); 
 		// EatAction eatActionCmd = new EatAction(this);
-		EatAction eatActionCmd = new EatAction(this);
+		// EatAction eatActionCmd = new EatAction(this);
 		JumpAction jumpAction = new JumpAction(this);
 
 		shutdownActionCmd.associateDeviceInputs();
@@ -640,7 +654,7 @@ public class MazeGame extends VariableFrameRateGame {
 		turnActionCmd.associateDeviceInputs();
 		// pitchActionCmd.associateDeviceInputs();
 		// eatActionCmd.associateDeviceInputs();
-		eatActionCmd.associateDeviceInputs();
+		// eatActionCmd.associateDeviceInputs();
 		jumpAction.associateDeviceInputs();
 	}
 
@@ -899,13 +913,13 @@ public class MazeGame extends VariableFrameRateGame {
 	// 		foodStorageEmpty = true;
 	// 	}
 	// }
-	private void _eatAction() {
-		if (foodStorageBuf > 0.0f) {
-			foodLevel += foodStorageBuf;
-			foodStorageBuf = 0.0f;
-			foodStorageEmpty = true;
-		}
-	}
+	// private void _eatAction() {
+	// 	if (foodStorageBuf > 0.0f) {
+	// 		foodLevel += foodStorageBuf;
+	// 		foodStorageBuf = 0.0f;
+	// 		foodStorageEmpty = true;
+	// 	}
+	// }
 	
 	private void _jumpAction() {
 		isJumping = true;
@@ -931,14 +945,14 @@ public class MazeGame extends VariableFrameRateGame {
 	/**
 	 * Decreases the food level and ensures that it remains unsigned
 	 */
-	private void decreaseFoodLevel() {
-		// System.out.println("FoodLevel: " + Integer.toString(Math.round(foodLevel)));
-		float decN = (float)elapsTime / 1500.0f;
-		// System.out.println("elapsTime: " + Integer.toString(decN));
-		if((foodLevel-decN) < 0.0f) foodLevel = 0.0f;
-		if (foodLevel == 0.0f) return;
-		foodLevel -= decN;
-	}
+	// private void decreaseFoodLevel() {
+	// 	// System.out.println("FoodLevel: " + Integer.toString(Math.round(foodLevel)));
+	// 	float decN = (float)elapsTime / 1500.0f;
+	// 	// System.out.println("elapsTime: " + Integer.toString(decN));
+	// 	if((foodLevel-decN) < 0.0f) foodLevel = 0.0f;
+	// 	if (foodLevel == 0.0f) return;
+	// 	foodLevel -= decN;
+	// }
 
 	/**
 	 * Create HUDs to display necessary information on the screen
