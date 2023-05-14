@@ -72,6 +72,7 @@ public class ProtocolClient extends GameConnectionClient
 			{	if(messageTokens[1].compareTo("success") == 0)
 				{	System.out.println("join success confirmed");
 					game.setIsConnected(true);
+					sendPlayerTexture();
 					sendCreateMessage(game.getPlayerPosition());
 					sendNeedNPCMessage();
 				}
@@ -185,6 +186,19 @@ public class ProtocolClient extends GameConnectionClient
 
 				// updateGhostNPC(ghostPosition, 1.0);
 			}
+			if (messageTokens[0].compareTo("ghostAvatarTexture") == 0) {
+				// game.setGameOver();
+				// game.setGameWinnerUUIDStr(messageTokens[1]);
+				game.setGhostAvatarTexture(messageTokens[1]);
+				// create a new ghost NPC
+				// Parse out the position
+				// Vector3f ghostPosition = new Vector3f(
+				// Float.parseFloat(messageTokens[1]),
+				// Float.parseFloat(messageTokens[2]),
+				// Float.parseFloat(messageTokens[3]));
+
+				// updateGhostNPC(ghostPosition, 1.0);
+			}
 }	}
 	
 	// The initial message from the game client requesting to join the 
@@ -198,7 +212,7 @@ public class ProtocolClient extends GameConnectionClient
 		} catch (IOException e) 
 		{	e.printStackTrace();
 	}	}
-	
+
 	// Informs the server that the client is leaving the server. 
 	// Message Format: (bye,localId)
 
@@ -209,6 +223,7 @@ public class ProtocolClient extends GameConnectionClient
 		{	e.printStackTrace();
 	}	}
 	
+
 	// Informs the server of the client�s Avatar�s position. The server 
 	// takes this message and forwards it to all other clients registered 
 	// with the server.
@@ -232,6 +247,17 @@ public class ProtocolClient extends GameConnectionClient
 			message += "," + position.x();
 			message += "," + position.y();
 			message += "," + position.z();
+			
+			sendPacket(message);
+		} catch (IOException e) 
+		{	e.printStackTrace();
+	}
+	}
+
+	public void sendPlayerTexture() {
+		try 
+		{	String message = new String("playerTexture," + id.toString());
+			message += "," + game.getPlayerColor();
 			
 			sendPacket(message);
 		} catch (IOException e) 
@@ -264,6 +290,7 @@ public class ProtocolClient extends GameConnectionClient
 		} catch (IOException e) 
 		{	e.printStackTrace();
 	}	}
+	
 	
 	// Informs the server that the local avatar has changed position.  
 	// Message Format: (move,localId,x,y,z) where x, y, and z represent the position.

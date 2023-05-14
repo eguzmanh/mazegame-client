@@ -94,7 +94,9 @@ public class ScriptFactory {
     public float getDoubleFVFromEngine(String engineName, String key) {
         return ((Double)(engines.get(engineName).get(key))).floatValue();
     }
-
+    public String getStringFromEngine(String engineName, String key) {
+        return ((String)(engines.get(engineName).get(key)));
+    }
     
     private class Script {
         private File script;
