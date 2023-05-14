@@ -140,6 +140,7 @@ public class MazeGame extends VariableFrameRateGame {
 	}
 
 	public void initScriptEngine() {
+		// System.out.println("Initializing ggggggggg script engine");
 		scriptFactory = new ScriptFactory();
 		scriptFactory.initJSEngine();
 		scriptFactory.addJSScript("InitData", "assets/scripts/InitData.js");
@@ -177,11 +178,12 @@ public class MazeGame extends VariableFrameRateGame {
 
 	@Override
 	public void loadTextures() {
+		String playerTxStr = String.format("playerColor");
 		// plyrtx = new TextureImage("Basic Guy UV_Purple.jpg");
 		plyrRedtx = new TextureImage("Basic Guy UV_Red.jpg");
 		plyrGreentx = new TextureImage("Basic Guy UV_Green.jpg");
 		plyrYellowtx = new TextureImage("Basic Guy UV_Yellow.jpg");
-		plyrPurpletx = new TextureImage("Basic Guy UV_Purplejpg");
+		plyrPurpletx = new TextureImage("Basic Guy UV_Purple.jpg");
 
 		// fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
@@ -322,7 +324,7 @@ public class MazeGame extends VariableFrameRateGame {
 	private void syncScriptData() {
 		// moving to script engine 
 		playerColor = scriptFactory.getStringFromEngine("js", "playerColor");
-		setPlayerTexture();
+		// setPlayerTexture();
 		numPrizes = scriptFactory.getIntFromEngine("js", "numPrizes");
 		prizeCounter = scriptFactory.getIntFromEngine("js", "prizeCounter");
 		prizeCounterWin =scriptFactory.getIntFromEngine("js", "prizeCounterWin");
@@ -331,6 +333,7 @@ public class MazeGame extends VariableFrameRateGame {
 		foodLevel = scriptFactory.getDoubleFVFromEngine("js", "foodLevel");
 		foodLevelHungerThreshold =scriptFactory.getDoubleFVFromEngine("js", "foodLevelHungerThreshold");
 	}
+
 	private void setPlayerTexture() {
 		switch(playerColor) {
 			case "Green":
@@ -350,20 +353,37 @@ public class MazeGame extends VariableFrameRateGame {
 				plyrtx  = plyrPurpletx;
 		}
 	}
+
+	public void setGhostAvatarTexture(String gcolor) {
+		networkClient.setGhostTexture(getAvailableTexture(gcolor));
+	}
 	
-	// private void setGhostAvatarTexture() {
-	// 	gh
-	// }
+	private TextureImage getAvailableTexture(String color) {
+		switch(color) {
+			case "Green":
+				// networkClient.setGhostTexture(plyrGreentx);
+				return plyrGreentx;
+			case "Purple":
+				return plyrPurpletx;
+				case "Red":
+				return plyrRedtx;	
+			case "Yellow":
+				return plyrYellowtx;
+			default:
+				System.out.println("Unknown texture. Returning purple.");
+				return plyrPurpletx;
+		}
+	}
 	/**
 	 * Helper functions used to build the intial 3D World Objects
 	 */
 	private void buildPlayer() {
 		Matrix4f initialTranslation, initialScale, initialRotation;
-	
+		setPlayerTexture();
 		// build Player in the center of the window
 		plyr = new GameObject(GameObject.root(), plyrS, plyrtx);
 		networkClient.setGhostShape(plyrS);
-		networkClient.setGhostTexture(plyrtx);
+		// networkClient.setGhostTexture(plyrtx);
 		initialTranslation = (new Matrix4f()).translation(34.30f,minGameObjectYLoc,-486.6f); 
 		initialScale = (new Matrix4f()).scaling(0.5f);
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(90.0f)); 
@@ -974,6 +994,8 @@ public class MazeGame extends VariableFrameRateGame {
 	// get an Elapsed Speed for movement
 	public float getElapsedSpeed() { return (float)elapsTime / 50f; }
 
+	public String getPlayerColor() { return playerColor; }
+
 	// Check if the game is suspended
 	public boolean isSuspended() {return isPaused() || isGameOver(); }
 
@@ -1003,6 +1025,8 @@ public class MazeGame extends VariableFrameRateGame {
 	protected void processNetworking(float elapsTime) { networkClient.runProcessNetworking(elapsTime); }
 
 	public ProtocolClient getProtClient() { return networkClient.getProtClient(); }
+
+	public NetworkClient getNetworkClient() { return networkClient; }
 
 	public GameObject getPlayer() { return plyr; }
 
