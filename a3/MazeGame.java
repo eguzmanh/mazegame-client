@@ -71,9 +71,9 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean isMounted, isInPlayerBounds;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject plyr, x, y, z, groundPlane, foodTorus, invisPlane;
-	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS, invisPlaneS;
-	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npcTx;
+	private GameObject plyr, x, y, z, groundPlane, foodTorus, invisPlane, sphereBig, sphereMed, sphereSml;
+	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS, invisPlaneS, sphereBigS, sphereMedS, sphereSmlS;
+	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npcTx, sphereBigTx, sphereMedTx, sphereSmlTx;
 	private int spaceBox;
 	private TerrainPlane terrain;
 	private AnimatedShape plyrS;
@@ -177,6 +177,9 @@ public class MazeGame extends VariableFrameRateGame {
 		npcS = new ImportedModel("GhostNew.obj");
 
 		// ((Plane)groundPlaneS).setPlaneSize(new Vector3f(0f,0f,-1000f), new Vector3f(0f,0f,1000f));
+		sphereBigS = new Sphere();
+		sphereMedS = new Sphere();
+		sphereSmlS = new Sphere();
 	}
 
 	@Override
@@ -189,6 +192,9 @@ public class MazeGame extends VariableFrameRateGame {
 		// customTextures.add(new TextureImage("Floral_Sheet.png"));
 		mazeTx = new TextureImage("rustic_stone_wall_diff_4k.jpg");
 		npcTx = new TextureImage("Ghost UV.jpg");
+		sphereBigTx = new TextureImage("rock_surface_diff_4k.jpg");
+		sphereMedTx = new TextureImage("coast_sand_rocks_02_diff_4k.jpg");
+		sphereSmlTx = new TextureImage("rock_boulder_dry_diff_4k.jpg");
 	}
 
 	@Override
@@ -208,6 +214,7 @@ public class MazeGame extends VariableFrameRateGame {
 		// buildFoodTorus();
 		buildNPCGhost();
 		// buildMaze();
+		buildSpheres();
 	}
 
 	@Override
@@ -289,12 +296,13 @@ public class MazeGame extends VariableFrameRateGame {
 		
 		//update sound
 		walkSound.setLocation(plyr.getWorldLocation());
-		//ghostSound.setEmitDirection(ghost.getWorldLocation(), 360f);
 		backgroundMusic.setEmitDirection(new Vector3f(0,0,0), 360f);
 		setEarParamenters();
 
 		//update physics
 		updatePhysics(running);
+
+		updateSceneGraph();
 	}
 	
 	/******************************************************
@@ -343,7 +351,7 @@ public class MazeGame extends VariableFrameRateGame {
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(90.0f)); 
 		
 		plyr.setLocalTranslation(initialTranslation);
-		plyr.setLocalRotation(initialRotation); 
+		//plyr.setLocalRotation(initialRotation); 
 		plyr.setLocalScale(initialScale);
 	}
 
@@ -374,6 +382,43 @@ public class MazeGame extends VariableFrameRateGame {
 		groundPlane.setHeightMap(terrTx);
 		
 		groundPlane.getRenderStates().setTiling(1);
+	}
+	// SceneGraph objects
+	private void buildSpheres(){
+		Matrix4f initialTranslation, initialScale, initialRotation;
+		//Big Sphere
+		sphereBig = new GameObject(GameObject.root(), sphereBigS, sphereBigTx);
+		initialTranslation = (new Matrix4f()).translation(0,100,0);
+		initialScale = (new Matrix4f()).scaling(25.0f);
+		sphereBig.setLocalTranslation(initialTranslation);
+		sphereBig.setLocalScale(initialScale);
+		//Med Sphere
+		sphereMed = new GameObject(GameObject.root(), sphereMedS, sphereMedTx);
+		initialTranslation = (new Matrix4f()).translation(-100,0,0);
+		sphereMed.setLocalTranslation(initialTranslation);
+		sphereMed.setParent(sphereBig);
+		sphereMed.propagateTranslation(true);
+		sphereMed.propagateRotation(false);
+		//Small Sphere
+		sphereSml = new GameObject(GameObject.root(), sphereSmlS, sphereSmlTx);
+		initialTranslation = (new Matrix4f()).translation(0,10,0);
+		sphereSml.setLocalTranslation(initialTranslation);
+		sphereSml.setParent(sphereMed);
+		sphereSml.propagateTranslation(true);
+		sphereSml.propagateRotation(false);
+	}
+	
+	private void updateSceneGraph(){
+		double amtt = getElapsedTime() * 0.01f;
+
+		Matrix4f translation = (new Matrix4f()).translation((float)Math.sin(amtt), 0.0f, (float)Math.cos(amtt));
+		Matrix4f rotation = (new Matrix4f()).rotationY((float)amtt);
+		Matrix4f transform = translation.mul(rotation);
+		sphereMed.setLocalTranslation(transform);
+
+		// currentTranslation = sphereSml.getLocalTranslation();
+		// currentTranslation.translation((float)Math.sin(amtt), 0.0f, (float)Math.cos(amtt));
+		// sphereSml.setLocalTranslation(currentTranslation);
 	}
 
 	// Used to set the random positions for the prizes and food stations
@@ -459,13 +504,12 @@ public class MazeGame extends VariableFrameRateGame {
 		backgroundMusic.setRollOff(5.0f);
 
 		walkSound.setLocation(plyr.getWorldLocation());
-		//ghostSound.setLocation(ghost.getWorldLocation());
 		backgroundMusic.setLocation(new Vector3f(0,0,0));
 
 		setEarParamenters();
 
 		backgroundMusic.play();
-		//ghostSound.play();
+		ghostSound.play();
 	}
 
 	public void setEarParamenters(){
