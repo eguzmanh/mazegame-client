@@ -391,7 +391,7 @@ public class MazeGame extends VariableFrameRateGame {
 		// build Player in the center of the window
 		plyr = new GameObject(GameObject.root(), plyrS, plyrtx);
 		networkClient.setGhostShape(plyrS);
-		// networkClient.setGhostTexture(plyrtx);
+		networkClient.setGhostTexture(plyrtx);
 		initialTranslation = (new Matrix4f()).translation(34.30f,minGameObjectYLoc,-486.6f); 
 		initialScale = (new Matrix4f()).scaling(0.5f);
 		initialRotation = (new Matrix4f()).rotationY((float)java.lang.Math.toRadians(90.0f)); 
@@ -440,14 +440,14 @@ public class MazeGame extends VariableFrameRateGame {
 		sphereBig.setLocalScale(initialScale);
 		//Med Sphere
 		sphereMed = new GameObject(GameObject.root(), sphereMedS, sphereMedTx);
-		initialTranslation = (new Matrix4f()).translation(-100,0,0);
+		initialTranslation = (new Matrix4f()).translation(-50,0,-50);
 		sphereMed.setLocalTranslation(initialTranslation);
 		sphereMed.setParent(sphereBig);
 		sphereMed.propagateTranslation(true);
 		sphereMed.propagateRotation(false);
 		//Small Sphere
 		sphereSml = new GameObject(GameObject.root(), sphereSmlS, sphereSmlTx);
-		initialTranslation = (new Matrix4f()).translation(0,10,0);
+		initialTranslation = (new Matrix4f()).translation(0,50,0);
 		sphereSml.setLocalTranslation(initialTranslation);
 		sphereSml.setParent(sphereMed);
 		sphereSml.propagateTranslation(true);

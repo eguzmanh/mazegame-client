@@ -72,7 +72,7 @@ public class ProtocolClient extends GameConnectionClient
 			{	if(messageTokens[1].compareTo("success") == 0)
 				{	System.out.println("join success confirmed");
 					game.setIsConnected(true);
-					sendPlayerTexture();
+					//sendPlayerTexture();
 					sendCreateMessage(game.getPlayerPosition());
 					sendNeedNPCMessage();
 				}
