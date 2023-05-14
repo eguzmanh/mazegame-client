@@ -198,7 +198,7 @@ public class ProtocolClient extends GameConnectionClient
 		} catch (IOException e) 
 		{	e.printStackTrace();
 	}	}
-	
+
 	// Informs the server that the client is leaving the server. 
 	// Message Format: (bye,localId)
 
@@ -209,6 +209,7 @@ public class ProtocolClient extends GameConnectionClient
 		{	e.printStackTrace();
 	}	}
 	
+
 	// Informs the server of the client�s Avatar�s position. The server 
 	// takes this message and forwards it to all other clients registered 
 	// with the server.

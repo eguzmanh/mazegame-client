@@ -73,7 +73,7 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private GameObject plyr, x, y, z, groundPlane, foodTorus, invisPlane;
 	private ObjShape linxS, linyS, linzS, prizeS, foodStationS, groundPlaneS, foodTorusS, mazeS, npcS, invisPlaneS;
-	private TextureImage plyrtx, fstx, terrTx, forestFloor, mazeTx, npcTx;
+	private TextureImage plyrtx, plyrRedtx, plyrGreentx, plyrYellowtx, plyrPurpletx, fstx, terrTx, forestFloor, mazeTx, npcTx;
 	private int spaceBox;
 	private TerrainPlane terrain;
 	private AnimatedShape plyrS;
@@ -88,16 +88,10 @@ public class MazeGame extends VariableFrameRateGame {
 	private ArrayList<Prize> prizes;
 	private ArrayList<FoodStation> foodStations;
 
-	// private File scriptFile1, scriptFile2, scriptFile3;
-	// private long fileLastModifiedTime = 0;
 	ScriptEngine jsEngine;
 
 	private ScriptFactory scriptFactory;
 
-
-	private float foodTorusAzimuth, // start BEHIND and ABOVE the target 
-				foodTorusElevation, // elevation is in degrees 
-				foodTorusRadius; // distance from camera to avatar
 	private float foodStorageBuf;
 	private boolean foodStorageEmpty;
 
@@ -123,6 +117,8 @@ public class MazeGame extends VariableFrameRateGame {
 	private boolean isJumping = false;
 	private int direction;
 	private float vals[] = new float[16];
+
+	private String playerColor;
 	
 
 	public MazeGame(String serverAddress, int serverPort, String protocol) { 
@@ -181,7 +177,12 @@ public class MazeGame extends VariableFrameRateGame {
 
 	@Override
 	public void loadTextures() {
-		plyrtx = new TextureImage("Basic Guy UV_Purple.jpg");
+		// plyrtx = new TextureImage("Basic Guy UV_Purple.jpg");
+		plyrRedtx = new TextureImage("Basic Guy UV_Red.jpg");
+		plyrGreentx = new TextureImage("Basic Guy UV_Green.jpg");
+		plyrYellowtx = new TextureImage("Basic Guy UV_Yellow.jpg");
+		plyrPurpletx = new TextureImage("Basic Guy UV_Purplejpg");
+
 		// fstx = new TextureImage("Drawer_Door.jpg");
 		forestFloor = new TextureImage("forest_floor_diff_4k.jpg");
 		terrTx = new TextureImage("MazeHeightMap.jpg");
@@ -320,6 +321,8 @@ public class MazeGame extends VariableFrameRateGame {
 
 	private void syncScriptData() {
 		// moving to script engine 
+		playerColor = scriptFactory.getStringFromEngine("js", "playerColor");
+		setPlayerTexture();
 		numPrizes = scriptFactory.getIntFromEngine("js", "numPrizes");
 		prizeCounter = scriptFactory.getIntFromEngine("js", "prizeCounter");
 		prizeCounterWin =scriptFactory.getIntFromEngine("js", "prizeCounterWin");
@@ -328,6 +331,29 @@ public class MazeGame extends VariableFrameRateGame {
 		foodLevel = scriptFactory.getDoubleFVFromEngine("js", "foodLevel");
 		foodLevelHungerThreshold =scriptFactory.getDoubleFVFromEngine("js", "foodLevelHungerThreshold");
 	}
+	private void setPlayerTexture() {
+		switch(playerColor) {
+			case "Green":
+				plyrtx = plyrGreentx;
+				break;
+			case "Purple":
+				plyrtx = plyrPurpletx;
+				break;
+				case "Red":
+				plyrtx = plyrRedtx;	
+				break;
+			case "Yellow":
+				plyrtx = plyrYellowtx;
+				break;
+			default:
+				System.out.println("unknown value found in script data.\nUsing the default color Purple.");
+				plyrtx  = plyrPurpletx;
+		}
+	}
+	
+	// private void setGhostAvatarTexture() {
+	// 	gh
+	// }
 	/**
 	 * Helper functions used to build the intial 3D World Objects
 	 */
